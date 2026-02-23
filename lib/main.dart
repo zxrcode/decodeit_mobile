@@ -1,0 +1,26 @@
+import 'package:flutter/material.dart';
+import 'core/di.dart';
+import 'ui/theme/app_theme.dart';
+import 'ui/screens/main_screen.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  setupDependencies();
+  runApp(const DecodeItApp());
+}
+
+class DecodeItApp extends StatelessWidget {
+  const DecodeItApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Decode It!',
+      debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.system,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      home: const MainScreen(),
+    );
+  }
+}
