@@ -47,6 +47,18 @@ dependencies:
   gal: ^2.3.2
   permission_handler: ^12.0.1
 
+  # From InfoCodeMaster
+  google_fonts: ^6.1.0
+
+  # From stenography-app
+  image: ^4.5.4
+  image_picker: ^1.2.1
+  encrypt: ^5.0.1
+  path_provider: ^2.1.5
+
+  # From morse_code_translator_app
+  audioplayers: ^6.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -68,6 +80,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # Assets for morse code audio
+  assets:
+    - assets/audios/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
