@@ -65,12 +65,12 @@ class _SteganographyScreenState extends State<SteganographyScreen>
         children: [
           const Icon(Icons.image, size: 100, color: Colors.grey),
           const SizedBox(height: 8),
-          const Text('No image selected.'),
+          const Text('Сурет таңдалмаған.'),
           const SizedBox(height: 8),
           FilledButton.icon(
             onPressed: () => _pickImage(isEncode),
             icon: const Icon(Icons.photo_library),
-            label: const Text('Pick Image'),
+            label: const Text('Сурет таңдау'),
           ),
         ],
       );
@@ -95,7 +95,7 @@ class _SteganographyScreenState extends State<SteganographyScreen>
         TextButton.icon(
           onPressed: () => _pickImage(isEncode),
           icon: const Icon(Icons.swap_horiz),
-          label: const Text('Change Image'),
+          label: const Text('Суретті өзгерту'),
         ),
       ],
     );
@@ -109,7 +109,7 @@ class _SteganographyScreenState extends State<SteganographyScreen>
 
     final totalPixels = image.width * image.height;
     if (allBytes.length * 8 > totalPixels) {
-      throw ArgumentError('Message is too long for this image.');
+      throw ArgumentError('Хабарлама бұл сурет үшін тым ұзын.');
     }
 
     // Clone image to avoid modifying the original
@@ -146,11 +146,11 @@ class _SteganographyScreenState extends State<SteganographyScreen>
         lengthBytes.buffer.asByteData().getUint32(0, Endian.big);
     
     if (messageLength <= 0 || messageLength > 1000000) {
-      throw Exception('No valid encoded message found or data is corrupted.');
+      throw Exception('Жарамды кодталған хабарлама табылмады немесе деректер зақымдалған.');
     }
     
     if (messageLength * 8 > image.width * image.height - 32) {
-      throw Exception('Encoded message length is too large for image.');
+      throw Exception('Кодталған хабарламаның ұзындығы сурет үшін тым үлкен.');
     }
 
     // Read message bytes
@@ -208,7 +208,7 @@ class _SteganographyScreenState extends State<SteganographyScreen>
       html.Url.revokeObjectUrl(url);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Image downloaded successfully!')),
+          const SnackBar(content: Text('Сурет сәтті жүктелді!')),
         );
       }
     } else {
@@ -220,7 +220,7 @@ class _SteganographyScreenState extends State<SteganographyScreen>
       await imageFile.writeAsBytes(bytes);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Image saved to:\n$imagePath')),
+          SnackBar(content: Text('Сурет сақталды:\n$imagePath')),
         );
       }
     }
@@ -229,13 +229,13 @@ class _SteganographyScreenState extends State<SteganographyScreen>
   Future<void> _encodeAndSave() async {
     if (_isKeyAvailableForEncode && _key.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter an encryption key.')),
+        const SnackBar(content: Text('Шифрлау кілтін енгізіңіз.')),
       );
       return;
     }
     if (_encodeImage == null || _message.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select an image and enter a message.')),
+        const SnackBar(content: Text('Сурет таңдап, хабарлама енгізіңіз.')),
       );
       return;
     }
@@ -249,7 +249,7 @@ class _SteganographyScreenState extends State<SteganographyScreen>
       final imageBytes = await _encodeImage!.readAsBytes();
       final image = img.decodeImage(imageBytes);
       if (image == null) {
-        throw Exception('Could not decode image.');
+        throw Exception('Суретті декодтау мүмкін болмады.');
       }
       final encodedImage = _encodeMessage(messageToEncode, image);
 
@@ -274,13 +274,13 @@ class _SteganographyScreenState extends State<SteganographyScreen>
   Future<void> _doDecode() async {
     if (_isKeyAvailableForDecode && _decodeKey.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a decryption key.')),
+        const SnackBar(content: Text('Дешифрлау кілтін енгізіңіз.')),
       );
       return;
     }
     if (_decodeImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select an image.')),
+        const SnackBar(content: Text('Суретті таңдаңыз.')),
       );
       return;
     }
@@ -289,7 +289,7 @@ class _SteganographyScreenState extends State<SteganographyScreen>
       final imageBytes = await _decodeImage!.readAsBytes();
       final image = img.decodeImage(imageBytes);
       if (image == null) {
-        throw Exception('Could not decode image.');
+        throw Exception('Суретті декодтау мүмкін болмады.');
       }
       String extractedMessage = _decodeMessage(image);
 
@@ -297,7 +297,7 @@ class _SteganographyScreenState extends State<SteganographyScreen>
         try {
           extractedMessage = _decryptMessage(extractedMessage, _decodeKey);
         } catch (e) {
-          throw Exception('Failed to decrypt. Wrong key or not encrypted.');
+          throw Exception('Дешифрлау сәтсіз аяқталды. Кілті қате немесе шифрланбаған.');
         }
       }
 
@@ -307,7 +307,7 @@ class _SteganographyScreenState extends State<SteganographyScreen>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(content: Text('Қате: $e')),
         );
       }
     }
@@ -317,15 +317,15 @@ class _SteganographyScreenState extends State<SteganographyScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Steganography'),
+        title: const Text('Стеганография'),
       ),
       body: Column(
         children: [
           TabBar(
             controller: _tabController,
             tabs: const [
-              Tab(icon: Icon(Icons.image_outlined), text: 'Encode'),
-              Tab(icon: Icon(Icons.text_snippet_outlined), text: 'Decode'),
+              Tab(icon: Icon(Icons.image_outlined), text: 'Кодтау'),
+              Tab(icon: Icon(Icons.text_snippet_outlined), text: 'Декодтау'),
             ],
           ),
           Expanded(
@@ -348,7 +348,7 @@ class _SteganographyScreenState extends State<SteganographyScreen>
       child: Column(
         children: [
           Text(
-            'Encode a secret message into an image using LSB steganography.',
+            'LSB стеганографиясын пайдаланып, суреттің ішіне жасырын хабарламаны жасырыңыз.',
             style: Theme.of(context).textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
@@ -365,7 +365,7 @@ class _SteganographyScreenState extends State<SteganographyScreen>
               future: _encodeImage?.length(),
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
-                  return Text('Image size: ${(snapshot.data! / 1024).toStringAsFixed(1)} KB');
+                  return Text('Сурет өлшемі: ${(snapshot.data! / 1024).toStringAsFixed(1)} КБ');
                 }
                 return const SizedBox.shrink();
               },
@@ -374,8 +374,8 @@ class _SteganographyScreenState extends State<SteganographyScreen>
           const SizedBox(height: 16),
           TextField(
             decoration: const InputDecoration(
-              labelText: 'Message',
-              hintText: 'Enter your secret message...',
+              labelText: 'Хабарлама',
+              hintText: 'Жасырын хабарламаңызды енгізіңіз...',
               border: OutlineInputBorder(),
             ),
             maxLines: 3,
@@ -390,13 +390,13 @@ class _SteganographyScreenState extends State<SteganographyScreen>
                   setState(() => _isKeyAvailableForEncode = value!);
                 },
               ),
-              const Text('Encrypt with key'),
+              const Text('Кілтпен шифрлау'),
             ],
           ),
           if (_isKeyAvailableForEncode)
             TextField(
               decoration: const InputDecoration(
-                labelText: 'Encryption Key',
+                labelText: 'Шифрлау кілті',
                 border: OutlineInputBorder(),
               ),
               onChanged: (value) => setState(() => _key = value),
@@ -407,7 +407,7 @@ class _SteganographyScreenState extends State<SteganographyScreen>
             child: FilledButton.icon(
               onPressed: _encodeAndSave,
               icon: const Icon(Icons.save),
-              label: const Text('Encode & Save Image'),
+              label: const Text('Кодтау және суретті сақтау'),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
@@ -424,7 +424,7 @@ class _SteganographyScreenState extends State<SteganographyScreen>
       child: Column(
         children: [
           Text(
-            'Extract a hidden message from a steganography image.',
+            'Стеганографиялық суреттен жасырын хабарламаны шығарып алыңыз.',
             style: Theme.of(context).textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
@@ -444,13 +444,13 @@ class _SteganographyScreenState extends State<SteganographyScreen>
                   setState(() => _isKeyAvailableForDecode = value!);
                 },
               ),
-              const Text('Decrypt with key'),
+              const Text('Кілтпен дешифрлау'),
             ],
           ),
           if (_isKeyAvailableForDecode)
             TextField(
               decoration: const InputDecoration(
-                labelText: 'Decryption Key',
+                labelText: 'Дешифрлау кілті',
                 border: OutlineInputBorder(),
               ),
               onChanged: (value) => setState(() => _decodeKey = value),
@@ -461,7 +461,7 @@ class _SteganographyScreenState extends State<SteganographyScreen>
             child: FilledButton.icon(
               onPressed: _doDecode,
               icon: const Icon(Icons.lock_open),
-              label: const Text('Decode Image'),
+              label: const Text('Суретті декодтау'),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
@@ -481,7 +481,7 @@ class _SteganographyScreenState extends State<SteganographyScreen>
                         Icon(Icons.message, color: Theme.of(context).colorScheme.onPrimaryContainer),
                         const SizedBox(width: 8),
                         Text(
-                          'Decoded Message:',
+                          'Декодталған хабарлама:',
                           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             color: Theme.of(context).colorScheme.onPrimaryContainer,
                           ),

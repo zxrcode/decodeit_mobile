@@ -31,11 +31,11 @@ class _MorseChartScreenState extends State<MorseChartScreen> {
   String get _characterLabel {
     switch (_category) {
       case ChartCategory.alphabet:
-        return 'Character';
+        return 'Таңба';
       case ChartCategory.numbers:
-        return 'Number';
+        return 'Сан';
       case ChartCategory.punctuation:
-        return 'Symbol';
+        return 'Символ';
     }
   }
 
@@ -43,7 +43,7 @@ class _MorseChartScreenState extends State<MorseChartScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Morse Code Chart'),
+        title: const Text('Морзе коды кестесі'),
       ),
       body: Column(
         children: [
@@ -52,7 +52,15 @@ class _MorseChartScreenState extends State<MorseChartScreen> {
             child: Wrap(
               spacing: 8,
               children: ChartCategory.values.map((cat) {
-                final label = cat.name[0].toUpperCase() + cat.name.substring(1);
+                String label = '';
+                switch (cat) {
+                  case ChartCategory.alphabet:
+                    label = 'Әліпби';
+                  case ChartCategory.numbers:
+                    label = 'Сандар';
+                  case ChartCategory.punctuation:
+                    label = 'Тыныс белгілері';
+                }
                 return ChoiceChip(
                   label: Text(label),
                   selected: _category == cat,

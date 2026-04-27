@@ -109,7 +109,7 @@ class _MorseLearnScreenState extends State<MorseLearnScreen> {
     Clipboard.setData(ClipboardData(text: buffer.toString()));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Progress CSV copied to clipboard'),
+        content: Text('Прогресс CSV алмасу буферіне көшірілді'),
         duration: Duration(seconds: 2),
       ),
     );
@@ -119,7 +119,7 @@ class _MorseLearnScreenState extends State<MorseLearnScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Morse Learn'),
+        title: const Text('Морзе үйрену'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -131,8 +131,17 @@ class _MorseLearnScreenState extends State<MorseLearnScreen> {
               Wrap(
                 spacing: 8,
                 children: LearnCategory.values.map((cat) {
+                  String label = '';
+                  switch (cat) {
+                    case LearnCategory.letters:
+                      label = 'Әліпби';
+                    case LearnCategory.numbers:
+                      label = 'Сандар';
+                    case LearnCategory.punctuation:
+                      label = 'Тыныс белгілері';
+                  }
                   return ChoiceChip(
-                    label: Text(cat.name[0].toUpperCase() + cat.name.substring(1)),
+                    label: Text(label),
                     selected: _category == cat,
                     onSelected: (selected) {
                       if (selected) {
@@ -147,7 +156,7 @@ class _MorseLearnScreenState extends State<MorseLearnScreen> {
               // Hide target toggle
               Row(
                 children: [
-                  const Text('Hide target (harder)'),
+                  const Text('Таңбаны жасыру (қиынырақ)'),
                   Switch(
                     value: _hideTarget,
                     onChanged: (v) => setState(() => _hideTarget = v),
@@ -184,7 +193,7 @@ class _MorseLearnScreenState extends State<MorseLearnScreen> {
                     if (_isCorrect == false) ...[
                       const SizedBox(height: 8),
                       Text(
-                        'Correct: ${_currentMap[_targetChar]}',
+                        'Дұрыс: ${_currentMap[_targetChar]}',
                         style: const TextStyle(
                             fontSize: 16, color: Colors.red),
                       ),
@@ -201,7 +210,7 @@ class _MorseLearnScreenState extends State<MorseLearnScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  _userInput.isEmpty ? '(enter morse code)' : _userInput,
+                  _userInput.isEmpty ? '(морзе кодын енгізіңіз)' : _userInput,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -216,10 +225,10 @@ class _MorseLearnScreenState extends State<MorseLearnScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _inputButton('Dot (.)', () => _addSymbol('.')),
-                  _inputButton('Dash (-)', () => _addSymbol('-')),
-                  _inputButton('Space', _addSpace),
-                  _inputButton('Delete', _deleteLastSymbol,
+                  _inputButton('Нүкте (.)', () => _addSymbol('.')),
+                  _inputButton('Сызықша (-)', () => _addSymbol('-')),
+                  _inputButton('Бос орын', _addSpace),
+                  _inputButton('Өшіру', _deleteLastSymbol,
                       color: Theme.of(context).colorScheme.error),
                 ],
               ),
@@ -231,18 +240,18 @@ class _MorseLearnScreenState extends State<MorseLearnScreen> {
                   ElevatedButton.icon(
                     onPressed: _checkAnswer,
                     icon: const Icon(Icons.check),
-                    label: const Text('Check'),
+                    label: const Text('Тексеру'),
                   ),
                   ElevatedButton.icon(
                     onPressed: _nextQuestion,
                     icon: const Icon(Icons.skip_next),
-                    label: const Text('Skip'),
+                    label: const Text('Өткізіп жіберу'),
                   ),
                   ElevatedButton.icon(
                     onPressed: () =>
                         widget.audioService.playCharacter(_targetChar),
                     icon: const Icon(Icons.volume_up),
-                    label: const Text('Play'),
+                    label: const Text('Тыңдау'),
                   ),
                 ],
               ),
@@ -252,13 +261,13 @@ class _MorseLearnScreenState extends State<MorseLearnScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Progress',
+                    const Text('Прогресс',
                         style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold)),
                     IconButton(
                       icon: const Icon(Icons.copy, size: 18),
                       onPressed: _exportProgress,
-                      tooltip: 'Export CSV',
+                      tooltip: 'CSV экспорттау',
                     ),
                   ],
                 ),
@@ -278,10 +287,10 @@ class _MorseLearnScreenState extends State<MorseLearnScreen> {
                               .colorScheme
                               .surfaceContainerHighest),
                       children: const [
-                        _ProgressHeader('Char'),
-                        _ProgressHeader('Correct'),
-                        _ProgressHeader('Wrong'),
-                        _ProgressHeader('Rate'),
+                        _ProgressHeader('Таңба'),
+                        _ProgressHeader('Дұрыс'),
+                        _ProgressHeader('Қате'),
+                        _ProgressHeader('Пайыз'),
                       ],
                     ),
                     ..._progress.entries.map((entry) {

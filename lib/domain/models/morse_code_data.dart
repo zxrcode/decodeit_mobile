@@ -59,23 +59,23 @@ class MorseCodeData {
     ' ': '/',
   };
 
-  static final Map<String, String> reverseMorseMap =
-      morseCodeMap.map((key, value) => MapEntry(value, key));
+  static final Map<String, String> reverseMorseMap = morseCodeMap.map(
+    (key, value) => MapEntry(value, key),
+  );
 
   static Map<String, String> get alphabetMap => Map.fromEntries(
-        morseCodeMap.entries
-            .where((e) => RegExp(r'^[A-Z]$').hasMatch(e.key)),
-      );
+    morseCodeMap.entries.where((e) => RegExp(r'^[A-Z]$').hasMatch(e.key)),
+  );
 
   static Map<String, String> get numberMap => Map.fromEntries(
-        morseCodeMap.entries
-            .where((e) => RegExp(r'^[0-9]$').hasMatch(e.key)),
-      );
+    morseCodeMap.entries.where((e) => RegExp(r'^[0-9]$').hasMatch(e.key)),
+  );
 
   static Map<String, String> get punctuationMap => Map.fromEntries(
-        morseCodeMap.entries
-            .where((e) => RegExp(r'''[.,?!/()&:;=+\-"'@]''').hasMatch(e.key)),
-      );
+    morseCodeMap.entries.where(
+      (e) => RegExp(r'''[.,?!/()&:;=+\-"'@]''').hasMatch(e.key),
+    ),
+  );
 
   static String getMorseSound(String morseCode) {
     if (morseCode == '/') return '(space)';
@@ -101,17 +101,13 @@ class MorseCodeData {
   }
 
   static String morseToText(String morse) {
-    return morse
-        .split(' ')
-        .map((code) => reverseMorseMap[code] ?? '')
-        .join('');
+    return morse.split(' ').map((code) => reverseMorseMap[code] ?? '').join('');
   }
 
   static const List<Map<String, String>> quickExamples = [
     {'label': 'SOS', 'text': 'SOS'},
-    {'label': 'I LOVE YOU', 'text': 'I LOVE YOU'},
-    {'label': 'HELP', 'text': 'HELP'},
-    {'label': 'HELLO', 'text': 'HELLO'},
-    {'label': 'HI', 'text': 'HI'},
+    {'label': 'СӘЛЕМ', 'text': 'SALEM'},
+    {'label': 'КӨМЕК', 'text': 'KOMEK'},
+    {'label': 'ҚАЛАЙ ЖАҒДАЙ', 'text': 'KALAI JAGDAY'},
   ];
 }

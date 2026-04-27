@@ -33,9 +33,9 @@ class MorseReferenceTable extends StatelessWidget {
               decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest),
               children: [
                 _tableHeader(characterLabel, context),
-                _tableHeader("Code", context),
-                _tableHeader("Sound", context),
-                if (hasPlay) _tableHeader("Play", context),
+                _tableHeader("Коды", context),
+                _tableHeader("Дыбысы", context),
+                if (hasPlay) _tableHeader("Тыңдау", context),
               ],
             ),
             ...data.entries.map(

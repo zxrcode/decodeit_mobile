@@ -46,7 +46,7 @@ class _MorseTranslatorScreenState extends State<MorseTranslatorScreen> {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$label copied to clipboard'),
+        content: Text('$label алмасу буферіне көшірілді'),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -71,11 +71,11 @@ class _MorseTranslatorScreenState extends State<MorseTranslatorScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Audio Settings',
+                    'Аудио параметрлері',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 16),
-                  Text('Speed: ${settings.wpm.round()} WPM'),
+                  Text('Жылдамдық: ${settings.wpm.round()} WPM'),
                   Slider(
                     value: settings.wpm,
                     min: 5,
@@ -88,7 +88,7 @@ class _MorseTranslatorScreenState extends State<MorseTranslatorScreen> {
                     },
                   ),
                   const SizedBox(height: 8),
-                  Text('Volume: ${(settings.volume * 100).round()}%'),
+                  Text('Дыбыс деңгейі: ${(settings.volume * 100).round()}%'),
                   Slider(
                     value: settings.volume,
                     min: 0.0,
@@ -113,7 +113,7 @@ class _MorseTranslatorScreenState extends State<MorseTranslatorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Morse Code'),
+        title: const Text('Морзе коды'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -130,7 +130,7 @@ class _MorseTranslatorScreenState extends State<MorseTranslatorScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text("Text",
+                          Text("Мәтін",
                               style: Theme.of(context)
                                   .textTheme
                                   .labelSmall
@@ -138,7 +138,7 @@ class _MorseTranslatorScreenState extends State<MorseTranslatorScreen> {
                           IconButton(
                             icon: const Icon(Icons.copy, size: 18),
                             onPressed: () =>
-                                _copyToClipboard(textController.text, 'Text'),
+                                _copyToClipboard(textController.text, 'Мәтін'),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
                           ),
@@ -177,7 +177,7 @@ class _MorseTranslatorScreenState extends State<MorseTranslatorScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text("Morse Code",
+                          Text("Морзе коды",
                               style: Theme.of(context)
                                   .textTheme
                                   .labelSmall
@@ -185,7 +185,7 @@ class _MorseTranslatorScreenState extends State<MorseTranslatorScreen> {
                           IconButton(
                             icon: const Icon(Icons.copy, size: 18),
                             onPressed: () => _copyToClipboard(
-                                morseController.text, 'Morse code'),
+                                morseController.text, 'Морзе коды'),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
                           ),
