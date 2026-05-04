@@ -1,7 +1,7 @@
 # Decode It! Mobile (Encoderinfo)
 A universal encoding, decoding, hashing, and cryptography toolkit — all in one Flutter app. Supports **Android**, **iOS**, and **Web**.
 <p align="center">
-  <img src="assets/img/decodeit.png" width="400" alt="Logo">
+  <img src="assets/img/decodeit.png" width="800" alt="Logo">
 </p>
 
 > The UI language is **Kazakh (Қазақша)** with some English labels.
