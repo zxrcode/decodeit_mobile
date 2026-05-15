@@ -4,6 +4,13 @@ import 'tools/crypto_tool_screen.dart';
 import 'tools/encoders_tool_screen.dart';
 import 'tools/dev_tool_screen.dart';
 import 'history_screen.dart';
+import 'graphics_lab_screen.dart';
+import 'morse_translator_screen.dart';
+import 'morse_chart_screen.dart';
+import 'morse_learn_screen.dart';
+import 'steganography_screen.dart';
+import '../../core/di.dart';
+import '../../data/services/morse_audio_service.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -70,6 +77,7 @@ class _HomeGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final morseAudioService = getIt<MorseAudioService>();
 
     final tools = [
       _ToolItem('QR Сканер', Icons.qr_code_scanner, Colors.teal, const QrToolScreen()),
@@ -80,6 +88,11 @@ class _HomeGrid extends StatelessWidget {
       _ToolItem('Уақыт белгісі', Icons.access_time, Colors.green, const DevToolScreen()),
       _ToolItem('IP Ақпарат', Icons.public, Colors.red, const DevToolScreen()),
       _ToolItem('Тарих', Icons.history, Colors.brown, const HistoryScreen()),
+      _ToolItem('Пиксель торы', Icons.grid_4x4, Colors.cyan, const GraphicsLabScreen()),
+      _ToolItem('Стеганография', Icons.visibility_off, Colors.deepOrange, const SteganographyScreen()),
+      _ToolItem('Морзе код', Icons.signal_cellular_alt, Colors.lime, MorseTranslatorScreen(audioService: morseAudioService)),
+      _ToolItem('Морзе кесте', Icons.table_chart, Colors.amber, MorseChartScreen(audioService: morseAudioService)),
+      _ToolItem('Морзе оқу', Icons.school, Colors.pink, MorseLearnScreen(audioService: morseAudioService)),
     ];
 
     return Scaffold(
