@@ -20,7 +20,7 @@ class DecodeItApp extends StatelessWidget {
     return MaterialApp(
       title: 'Decode It!',
       debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.dark,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       home: const MainScreen(),

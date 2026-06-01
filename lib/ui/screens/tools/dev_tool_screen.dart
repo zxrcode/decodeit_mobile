@@ -284,6 +284,10 @@ class _DevToolScreenState extends State<DevToolScreen> with SingleTickerProvider
             _InfoCard(icon: Icons.language, label: 'IP мекен-жайы', value: _ipInfo!.ip),
             _InfoCard(icon: Icons.flag, label: 'Ел', value: _ipInfo!.country),
             _InfoCard(icon: Icons.location_city, label: 'Қала', value: _ipInfo!.city),
+            if (_ipInfo!.region != null && _ipInfo!.region!.isNotEmpty)
+              _InfoCard(icon: Icons.map_outlined, label: 'Аймақ (Region)', value: _ipInfo!.region!),
+            if (_ipInfo!.timezone != null && _ipInfo!.timezone!.isNotEmpty)
+              _InfoCard(icon: Icons.access_time, label: 'Уақыт белдеуі', value: _ipInfo!.timezone!),
             _InfoCard(icon: Icons.cell_tower, label: 'Провайдер (ISP)', value: _ipInfo!.isp),
           ],
         ],

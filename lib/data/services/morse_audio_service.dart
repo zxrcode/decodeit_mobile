@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../../domain/models/morse_code_data.dart';
 import '../../domain/models/audio_settings.dart';
@@ -7,6 +8,7 @@ class MorseAudioService {
   final AudioSettings settings = AudioSettings();
   bool _stopRequested = false;
   bool _isPlaying = false;
+  final ValueNotifier<bool> isEmittingSound = ValueNotifier<bool>(false);
 
   bool get isPlaying => _isPlaying;
 
@@ -30,11 +32,15 @@ class MorseAudioService {
           for (String symbol in letter.split('')) {
             if (_stopRequested) break;
             if (symbol == '.') {
+              isEmittingSound.value = true;
               await _audioPlayer.play(AssetSource('audios/short_beep.mp3'));
               await _delay(settings.dotDuration);
+              isEmittingSound.value = false;
             } else if (symbol == '-') {
+              isEmittingSound.value = true;
               await _audioPlayer.play(AssetSource('audios/long_beep.mp3'));
               await _delay(settings.dashDuration);
+              isEmittingSound.value = false;
             }
             if (_stopRequested) break;
             await _delay(settings.symbolGap);
@@ -47,6 +53,7 @@ class MorseAudioService {
       }
     } finally {
       _isPlaying = false;
+      isEmittingSound.value = false;
     }
   }
 
@@ -63,17 +70,22 @@ class MorseAudioService {
       for (String symbol in morse.split('')) {
         if (_stopRequested) break;
         if (symbol == '.') {
+          isEmittingSound.value = true;
           await _audioPlayer.play(AssetSource('audios/short_beep.mp3'));
           await _delay(settings.dotDuration);
+          isEmittingSound.value = false;
         } else if (symbol == '-') {
+          isEmittingSound.value = true;
           await _audioPlayer.play(AssetSource('audios/long_beep.mp3'));
           await _delay(settings.dashDuration);
+          isEmittingSound.value = false;
         }
         if (_stopRequested) break;
         await _delay(settings.symbolGap);
       }
     } finally {
       _isPlaying = false;
+      isEmittingSound.value = false;
     }
   }
 
@@ -81,6 +93,7 @@ class MorseAudioService {
     _stopRequested = true;
     await _audioPlayer.stop();
     _isPlaying = false;
+    isEmittingSound.value = false;
   }
 
   Future<void> _delay(int milliseconds) async {
@@ -89,5 +102,6 @@ class MorseAudioService {
 
   void dispose() {
     _audioPlayer.dispose();
+    isEmittingSound.dispose();
   }
 }

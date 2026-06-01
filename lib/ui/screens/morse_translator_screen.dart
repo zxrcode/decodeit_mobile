@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../domain/models/morse_code_data.dart';
@@ -224,6 +225,9 @@ class _MorseTranslatorScreenState extends State<MorseTranslatorScreen> {
               }).toList(),
             ),
             const SizedBox(height: 12),
+            // Waveform visualizer
+            MorseWaveformVisualizer(audioService: widget.audioService),
+            const SizedBox(height: 16),
             // Play/Stop + Settings
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -246,5 +250,120 @@ class _MorseTranslatorScreenState extends State<MorseTranslatorScreen> {
         ),
       ),
     );
+  }
+}
+
+class MorseWaveformVisualizer extends StatefulWidget {
+  final MorseAudioService audioService;
+  const MorseWaveformVisualizer({super.key, required this.audioService});
+
+  @override
+  State<MorseWaveformVisualizer> createState() => _MorseWaveformVisualizerState();
+}
+
+class _MorseWaveformVisualizerState extends State<MorseWaveformVisualizer>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  bool _isSoundActive = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat();
+
+    widget.audioService.isEmittingSound.addListener(_onSoundChanged);
+  }
+
+  void _onSoundChanged() {
+    if (mounted) {
+      setState(() {
+        _isSoundActive = widget.audioService.isEmittingSound.value;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.audioService.isEmittingSound.removeListener(_onSoundChanged);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 70,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFF070B14),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF1E2638)),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return CustomPaint(
+              painter: _WaveformPainter(
+                progress: _controller.value,
+                isActive: _isSoundActive,
+                color: Theme.of(context).primaryColor,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _WaveformPainter extends CustomPainter {
+  final double progress;
+  final bool isActive;
+  final Color color;
+
+  _WaveformPainter({
+    required this.progress,
+    required this.isActive,
+    required this.color,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double midY = size.height / 2;
+    final double width = size.width;
+
+    final Paint paint = Paint()
+      ..color = isActive ? color : color.withOpacity(0.3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+
+    final Path path = Path();
+    path.moveTo(0, midY);
+
+    final double frequency = isActive ? 6.0 : 1.5;
+    final double amplitude = isActive ? size.height * 0.35 : 2.0;
+
+    for (double x = 0; x <= width; x++) {
+      final double t = x / width;
+      final double phase = progress * 2 * math.pi;
+      final double sineVal = math.sin(t * frequency * 2 * math.pi - phase);
+      final double envelope = math.sin(t * math.pi); // 0 at t=0, 1 at t=0.5, 0 at t=1
+      final double y = midY + sineVal * amplitude * envelope;
+      
+      path.lineTo(x, y);
+    }
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _WaveformPainter oldDelegate) {
+    return oldDelegate.progress != progress ||
+        oldDelegate.isActive != isActive ||
+        oldDelegate.color != color;
   }
 }
