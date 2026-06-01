@@ -91,7 +91,12 @@ class _SteganographyScreenState extends State<SteganographyScreen>
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done &&
                 snapshot.data != null) {
-              return Image.memory(snapshot.data!, width: 200, height: 200, fit: BoxFit.contain);
+              return Image.memory(
+                snapshot.data!,
+                width: 200,
+                height: 200,
+                fit: BoxFit.contain,
+              );
             }
             return const SizedBox(
               width: 200,
@@ -110,13 +115,15 @@ class _SteganographyScreenState extends State<SteganographyScreen>
     );
   }
 
-
   String _encryptMessage(String message, String key) {
     final keyBytes = utf8.encode(key);
     final hashedKey = sha256.convert(keyBytes).bytes.sublist(0, 16);
-    final encrypter = encrypt_package.Encrypter(encrypt_package.AES(
+    final encrypter = encrypt_package.Encrypter(
+      encrypt_package.AES(
         encrypt_package.Key(Uint8List.fromList(hashedKey)),
-        mode: encrypt_package.AESMode.cbc));
+        mode: encrypt_package.AESMode.cbc,
+      ),
+    );
     final iv = encrypt_package.IV.fromLength(16);
     final encrypted = encrypter.encrypt(message, iv: iv);
     return base64.encode(encrypted.bytes + iv.bytes);
@@ -125,9 +132,12 @@ class _SteganographyScreenState extends State<SteganographyScreen>
   String _decryptMessage(String encryptedMessage, String key) {
     final keyBytes = utf8.encode(key);
     final hashedKey = sha256.convert(keyBytes).bytes.sublist(0, 16);
-    final encrypter = encrypt_package.Encrypter(encrypt_package.AES(
+    final encrypter = encrypt_package.Encrypter(
+      encrypt_package.AES(
         encrypt_package.Key(Uint8List.fromList(hashedKey)),
-        mode: encrypt_package.AESMode.cbc));
+        mode: encrypt_package.AESMode.cbc,
+      ),
+    );
     final decoded = base64.decode(encryptedMessage);
     final iv = encrypt_package.IV(decoded.sublist(decoded.length - 16));
     final encryptedBytes = decoded.sublist(0, decoded.length - 16);
@@ -142,9 +152,9 @@ class _SteganographyScreenState extends State<SteganographyScreen>
         String message = kIsWeb
             ? 'Сурет сәтті жүктелді!'
             : 'Сурет құрылғы құжаттарына сақталды (steganography_image.png)';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     } catch (e) {
       if (mounted) {
@@ -171,23 +181,29 @@ class _SteganographyScreenState extends State<SteganographyScreen>
 
     setState(() {
       _isProcessing = true;
-      _processingStatus = 'Пикселдерге жазу...';
+      _processingStatus = 'Суретті дайындау...';
     });
+
+    await Future.delayed(const Duration(milliseconds: 1500));
 
     try {
       String messageToEncode = _message;
       if (_isKeyAvailableForEncode) {
+        setState(() => _processingStatus = 'Шифрлау...');
         messageToEncode = _encryptMessage(_message, _key);
       }
 
       final imageBytes = await _encodeImage!.readAsBytes();
+      setState(() => _processingStatus = 'Пикселдерге жазу...');
+      await Future.delayed(const Duration(milliseconds: 400));
 
-      // Run heavy pixel manipulation in background isolate
+      // Run heavy pixel manipulation
       final encodedImage = await compute(
         _encodeMessageIsolate,
         _EncodeParams(message: messageToEncode, imageBytes: imageBytes),
       );
 
+      setState(() => _processingStatus = 'Файлды сақтау...');
       await _saveImage(encodedImage);
 
       // Reset encode tab state
@@ -201,9 +217,9 @@ class _SteganographyScreenState extends State<SteganographyScreen>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Қате: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Қате: $e')));
       }
     } finally {
       if (mounted) {
@@ -220,9 +236,9 @@ class _SteganographyScreenState extends State<SteganographyScreen>
       return;
     }
     if (_decodeImage == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Суретті таңдаңыз.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Суретті таңдаңыз.')));
       return;
     }
 
@@ -230,6 +246,9 @@ class _SteganographyScreenState extends State<SteganographyScreen>
       _isProcessing = true;
       _processingStatus = 'Жасырын деректерді оқу...';
     });
+
+    // Wait a brief moment to allow the UI to render the overlay/animation
+    await Future.delayed(const Duration(milliseconds: 2000));
 
     try {
       final imageBytes = await _decodeImage!.readAsBytes();
@@ -244,7 +263,9 @@ class _SteganographyScreenState extends State<SteganographyScreen>
         try {
           extractedMessage = _decryptMessage(extractedMessage, _decodeKey);
         } catch (e) {
-          throw Exception('Дешифрлау сәтсіз аяқталды. Кілті қате немесе шифрланбаған.');
+          throw Exception(
+            'Дешифрлау сәтсіз аяқталды. Кілті қате немесе шифрланбаған.',
+          );
         }
       }
 
@@ -255,9 +276,9 @@ class _SteganographyScreenState extends State<SteganographyScreen>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Қате: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Қате: $e')));
       }
     } finally {
       if (mounted) {
@@ -269,9 +290,7 @@ class _SteganographyScreenState extends State<SteganographyScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Стеганография'),
-      ),
+      appBar: AppBar(title: const Text('Стеганография')),
       body: Stack(
         children: [
           Column(
@@ -280,26 +299,25 @@ class _SteganographyScreenState extends State<SteganographyScreen>
                 controller: _tabController,
                 tabs: const [
                   Tab(icon: Icon(Icons.image_outlined), text: 'Кодтау'),
-                  Tab(icon: Icon(Icons.text_snippet_outlined), text: 'Декодтау'),
-                  Tab(icon: Icon(Icons.psychology_outlined), text: 'LSB Түсіндірме'),
+                  Tab(
+                    icon: Icon(Icons.text_snippet_outlined),
+                    text: 'Декодтау',
+                  ),
+                  Tab(
+                    icon: Icon(Icons.psychology_outlined),
+                    text: 'LSB Түсіндірме',
+                  ),
                 ],
               ),
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
-                  children: [
-                    _encodeTab(),
-                    _decodeTab(),
-                    _lsbExplanationTab(),
-                  ],
+                  children: [_encodeTab(), _decodeTab(), _lsbExplanationTab()],
                 ),
               ),
             ],
           ),
-          if (_isProcessing)
-            LaserScannerOverlay(
-              statusText: _processingStatus,
-            ),
+          if (_isProcessing) LaserScannerOverlay(statusText: _processingStatus),
         ],
       ),
     );
@@ -328,7 +346,9 @@ class _SteganographyScreenState extends State<SteganographyScreen>
               future: _encodeImage?.length(),
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
-                  return Text('Сурет өлшемі: ${(snapshot.data! / 1024).toStringAsFixed(1)} КБ');
+                  return Text(
+                    'Сурет өлшемі: ${(snapshot.data! / 1024).toStringAsFixed(1)} КБ',
+                  );
                 }
                 return const SizedBox.shrink();
               },
@@ -441,13 +461,21 @@ class _SteganographyScreenState extends State<SteganographyScreen>
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.message, color: Theme.of(context).colorScheme.onPrimaryContainer),
+                        Icon(
+                          Icons.message,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onPrimaryContainer,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'Декодталған хабарлама:',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
-                          ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
+                              ),
                         ),
                       ],
                     ),
@@ -506,7 +534,10 @@ class _SteganographyScreenState extends State<SteganographyScreen>
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.visibility_off, color: theme.colorScheme.primary),
+                      Icon(
+                        Icons.visibility_off,
+                        color: theme.colorScheme.primary,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'LSB (Least Significant Bit) қалай жұмыс істейді?',
@@ -535,7 +566,13 @@ class _SteganographyScreenState extends State<SteganographyScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('1. Жасыру үшін таңба енгізіңіз:', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold)),
+                  Text(
+                    '1. Жасыру үшін таңба енгізіңіз:',
+                    style: GoogleFonts.orbitron(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -548,7 +585,10 @@ class _SteganographyScreenState extends State<SteganographyScreen>
                             counterText: '',
                             border: OutlineInputBorder(),
                           ),
-                          controller: TextEditingController(text: _lsbChar)..selection = TextSelection.fromPosition(TextPosition(offset: _lsbChar.length)),
+                          controller: TextEditingController(text: _lsbChar)
+                            ..selection = TextSelection.fromPosition(
+                              TextPosition(offset: _lsbChar.length),
+                            ),
                           onChanged: (val) {
                             if (val.isNotEmpty) {
                               setState(() {
@@ -565,7 +605,9 @@ class _SteganographyScreenState extends State<SteganographyScreen>
                           children: [
                             Text(
                               'ASCII коды: ${_lsbChar.isEmpty ? 0 : _lsbChar.codeUnitAt(0)}',
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -578,9 +620,9 @@ class _SteganographyScreenState extends State<SteganographyScreen>
                             ),
                           ],
                         ),
-                      )
+                      ),
                     ],
-                  )
+                  ),
                 ],
               ),
             ),
@@ -593,11 +635,32 @@ class _SteganographyScreenState extends State<SteganographyScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('2. Пиксель түсін баптаңыз (RGB):', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold)),
+                  Text(
+                    '2. Пиксель түсін баптаңыз (RGB):',
+                    style: GoogleFonts.orbitron(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 12),
-                  _colorSlider('Қызыл (Red): $rOrig', _lsbRed, Colors.red, (v) => setState(() => _lsbRed = v)),
-                  _colorSlider('Жасыл (Green): $gOrig', _lsbGreen, Colors.green, (v) => setState(() => _lsbGreen = v)),
-                  _colorSlider('Көк (Blue): $bOrig', _lsbBlue, Colors.blue, (v) => setState(() => _lsbBlue = v)),
+                  _colorSlider(
+                    'Қызыл (Red): $rOrig',
+                    _lsbRed,
+                    Colors.red,
+                    (v) => setState(() => _lsbRed = v),
+                  ),
+                  _colorSlider(
+                    'Жасыл (Green): $gOrig',
+                    _lsbGreen,
+                    Colors.green,
+                    (v) => setState(() => _lsbGreen = v),
+                  ),
+                  _colorSlider(
+                    'Көк (Blue): $bOrig',
+                    _lsbBlue,
+                    Colors.blue,
+                    (v) => setState(() => _lsbBlue = v),
+                  ),
                 ],
               ),
             ),
@@ -609,20 +672,44 @@ class _SteganographyScreenState extends State<SteganographyScreen>
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  Text('3. Соңғы биттерді ауыстыру процесі', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold)),
+                  Text(
+                    '3. Соңғы биттерді ауыстыру процесі',
+                    style: GoogleFonts.orbitron(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   _buildLsbStepRow('Red арнасы', rOrig, rBit, rMod, Colors.red),
                   const SizedBox(height: 8),
-                  _buildLsbStepRow('Green арнасы', gOrig, gBit, gMod, Colors.green),
+                  _buildLsbStepRow(
+                    'Green арнасы',
+                    gOrig,
+                    gBit,
+                    gMod,
+                    Colors.green,
+                  ),
                   const SizedBox(height: 8),
-                  _buildLsbStepRow('Blue арнасы', bOrig, bBit, bMod, Colors.blue),
+                  _buildLsbStepRow(
+                    'Blue арнасы',
+                    bOrig,
+                    bBit,
+                    bMod,
+                    Colors.blue,
+                  ),
                   const Divider(height: 24, color: Colors.white24),
                   Row(
                     children: [
                       Expanded(
                         child: Column(
                           children: [
-                            const Text('Бастапқы түс', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                            const Text(
+                              'Бастапқы түс',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             Container(
                               height: 60,
@@ -633,7 +720,10 @@ class _SteganographyScreenState extends State<SteganographyScreen>
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text('($rOrig, $gOrig, $bOrig)', style: GoogleFonts.firaCode(fontSize: 10)),
+                            Text(
+                              '($rOrig, $gOrig, $bOrig)',
+                              style: GoogleFonts.firaCode(fontSize: 10),
+                            ),
                           ],
                         ),
                       ),
@@ -641,7 +731,13 @@ class _SteganographyScreenState extends State<SteganographyScreen>
                       Expanded(
                         child: Column(
                           children: [
-                            const Text('Модификацияланған түс', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                            const Text(
+                              'Модификацияланған түс',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const SizedBox(height: 8),
                             Container(
                               height: 60,
@@ -652,7 +748,10 @@ class _SteganographyScreenState extends State<SteganographyScreen>
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text('($rMod, $gMod, $bMod)', style: GoogleFonts.firaCode(fontSize: 10)),
+                            Text(
+                              '($rMod, $gMod, $bMod)',
+                              style: GoogleFonts.firaCode(fontSize: 10),
+                            ),
                           ],
                         ),
                       ),
@@ -671,17 +770,25 @@ class _SteganographyScreenState extends State<SteganographyScreen>
                 ],
               ),
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
-  Widget _colorSlider(String label, double val, Color color, ValueChanged<double> onChanged) {
+  Widget _colorSlider(
+    String label,
+    double val,
+    Color color,
+    ValueChanged<double> onChanged,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+        ),
         Slider(
           value: val,
           min: 0,
@@ -694,39 +801,88 @@ class _SteganographyScreenState extends State<SteganographyScreen>
     );
   }
 
-  Widget _buildLsbStepRow(String title, int orig, int bit, int mod, Color color) {
+  Widget _buildLsbStepRow(
+    String title,
+    int orig,
+    int bit,
+    int mod,
+    Color color,
+  ) {
     final origBin = orig.toRadixString(2).padLeft(8, '0');
     final modBin = mod.toRadixString(2).padLeft(8, '0');
-    
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold)),
+        Text(
+          title,
+          style: TextStyle(
+            color: color,
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Row(
               children: [
-                Text('Бастапқы: ', style: TextStyle(fontSize: 10, color: Colors.grey.shade400)),
-                Text(origBin.substring(0, 7), style: GoogleFonts.firaCode(fontSize: 11)),
-                Text(origBin.substring(7), style: GoogleFonts.firaCode(fontSize: 11, color: Colors.red, fontWeight: FontWeight.bold)),
+                Text(
+                  'Бастапқы: ',
+                  style: TextStyle(fontSize: 10, color: Colors.grey.shade400),
+                ),
+                Text(
+                  origBin.substring(0, 7),
+                  style: GoogleFonts.firaCode(fontSize: 11),
+                ),
+                Text(
+                  origBin.substring(7),
+                  style: GoogleFonts.firaCode(
+                    fontSize: 11,
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
             Row(
               children: [
-                Text('Енгізілген бит: ', style: TextStyle(fontSize: 10, color: Colors.grey.shade400)),
-                Text('$bit', style: GoogleFonts.firaCode(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold)),
+                Text(
+                  'Енгізілген бит: ',
+                  style: TextStyle(fontSize: 10, color: Colors.grey.shade400),
+                ),
+                Text(
+                  '$bit',
+                  style: GoogleFonts.firaCode(
+                    fontSize: 11,
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
             Row(
               children: [
-                Text('Нәтиже: ', style: TextStyle(fontSize: 10, color: Colors.grey.shade400)),
-                Text(modBin.substring(0, 7), style: GoogleFonts.firaCode(fontSize: 11)),
-                Text(modBin.substring(7), style: GoogleFonts.firaCode(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold)),
+                Text(
+                  'Нәтиже: ',
+                  style: TextStyle(fontSize: 10, color: Colors.grey.shade400),
+                ),
+                Text(
+                  modBin.substring(0, 7),
+                  style: GoogleFonts.firaCode(fontSize: 11),
+                ),
+                Text(
+                  modBin.substring(7),
+                  style: GoogleFonts.firaCode(
+                    fontSize: 11,
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
           ],
-        )
+        ),
       ],
     );
   }
@@ -762,13 +918,28 @@ Uint8List _encodeMessageIsolate(_EncodeParams params) {
 
   final clonedImage = image.clone();
   int bitIndex = 0;
-  for (var y = 0; y < clonedImage.height && bitIndex < allBytes.length * 8; y++) {
-    for (var x = 0; x < clonedImage.width && bitIndex < allBytes.length * 8; x++) {
+  for (
+    var y = 0;
+    y < clonedImage.height && bitIndex < allBytes.length * 8;
+    y++
+  ) {
+    for (
+      var x = 0;
+      x < clonedImage.width && bitIndex < allBytes.length * 8;
+      x++
+    ) {
       var pixel = clonedImage.getPixel(x, y);
       var bit = (allBytes[bitIndex ~/ 8] >> (bitIndex % 8)) & 1;
       var r = pixel.r.toInt();
       r = (r & ~1) | bit;
-      clonedImage.setPixelRgba(x, y, r, pixel.g.toInt(), pixel.b.toInt(), pixel.a.toInt());
+      clonedImage.setPixelRgba(
+        x,
+        y,
+        r,
+        pixel.g.toInt(),
+        pixel.b.toInt(),
+        pixel.a.toInt(),
+      );
       bitIndex++;
     }
   }
@@ -795,7 +966,9 @@ String _decodeMessageIsolate(Uint8List imageBytes) {
 
   var messageLength = lengthBytes.buffer.asByteData().getUint32(0, Endian.big);
   if (messageLength <= 0 || messageLength > 1000000) {
-    throw Exception('Жарамды кодталған хабарлама табылмады немесе деректер зақымдалған.');
+    throw Exception(
+      'Жарамды кодталған хабарлама табылмады немесе деректер зақымдалған.',
+    );
   }
   if (messageLength * 8 > image.width * image.height - 32) {
     throw Exception('Кодталған хабарламаның ұзындығы сурет үшін тым үлкен.');
@@ -811,7 +984,8 @@ String _decodeMessageIsolate(Uint8List imageBytes) {
         continue;
       }
       var pixel = image.getPixel(x, y);
-      messageBytes[msgBitIndex ~/ 8] |= (pixel.r.toInt() & 1) << (msgBitIndex % 8);
+      messageBytes[msgBitIndex ~/ 8] |=
+          (pixel.r.toInt() & 1) << (msgBitIndex % 8);
       msgBitIndex++;
       bitIndex++;
     }

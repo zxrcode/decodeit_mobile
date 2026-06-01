@@ -69,6 +69,16 @@ class SoundGeneratorService {
     }
   }
 
+  void setVolume(double vol) {
+    if (kIsWeb) {
+      WebAudioHelper.setVolume(vol);
+      return;
+    }
+    if (_soundHandle != null) {
+      SoLoud.instance.setVolume(_soundHandle!, vol);
+    }
+  }
+
   bool get isPlaying {
     if (kIsWeb) return WebAudioHelper.isPlaying;
     return _soundHandle != null;

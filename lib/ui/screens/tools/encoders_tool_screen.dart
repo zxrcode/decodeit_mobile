@@ -163,9 +163,11 @@ class _EncodersToolScreenState extends State<EncodersToolScreen> with SingleTick
     );
   }
 
-  void _encodeBase64() {
+  void _encodeBase64() async {
     final input = _base64InputController.text;
     if (input.isEmpty) return;
+    setState(() => _base64OutputController.text = '');
+    await Future.delayed(const Duration(milliseconds: 50));
     final result = _encodingService.encodeBase64(input);
     setState(() => _base64OutputController.text = result);
     _historyService.addHistoryItem(HistoryItem(
@@ -176,9 +178,11 @@ class _EncodersToolScreenState extends State<EncodersToolScreen> with SingleTick
     ));
   }
 
-  void _decodeBase64() {
+  void _decodeBase64() async {
     final input = _base64InputController.text;
     if (input.isEmpty) return;
+    setState(() => _base64OutputController.text = '');
+    await Future.delayed(const Duration(milliseconds: 50));
     final result = _encodingService.decodeBase64(input);
     setState(() => _base64OutputController.text = result);
     _historyService.addHistoryItem(HistoryItem(

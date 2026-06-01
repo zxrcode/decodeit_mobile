@@ -63,6 +63,10 @@ class WebAudioHelper {
     _oscillator?.frequency.value = frequency;
   }
 
+  static void setVolume(double volume) {
+    _gainNode?.gain.value = volume;
+  }
+
   static bool get isPlaying => _oscillator != null;
 
   static void stop() {

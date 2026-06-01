@@ -20,13 +20,54 @@ class _PcmVisualizerScreenState extends State<PcmVisualizerScreen>
   bool _isPlaying = false;
   double _scanPosition = 0.0;
 
+  void _updateAnimationSpeed() {
+    // Higher sampling rate = faster animation
+    // 4Hz -> 4 seconds per cycle, 24Hz -> 0.6 seconds per cycle
+    final double newSeconds = (16.0 / _samplingRate) * 1.0;
+    _animationController.duration = Duration(milliseconds: (newSeconds * 1000).toInt());
+    if (_isPlaying) {
+      _animationController.repeat();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 4),
+      duration: const Duration(seconds: 2),
     )..addListener(() {
+        if (_isPlaying) {
+          final double x = _animationController.value;
+          
+          // Match painter's logic for quantization
+          // We have 1.5 sine cycles in the visual width
+          final int samplesCount = _samplingRate.round();
+          final int levels = math.pow(2, _bitDepth).toInt();
+          
+          // Find which visual sample we are on
+          final int currentSampleIndex = (x * samplesCount).floor();
+          // The x position of that sample's start
+          final double sampleT = currentSampleIndex / samplesCount;
+          
+          // Painter uses math.sin(t * 2 * math.pi * 1.5)
+          final double sineVal = math.sin(sampleT * 2 * math.pi * 1.5);
+          
+          // Normalize exactly like painter's yQuantized logic
+          // Painter: midY + sineVal * (size.height / 2 - levelHeight)
+          // Since we just need the quantized level (0 to levels-1)
+          final double normalized = (sineVal + 1.0) / 2.0; // 0.0 to 1.0
+          int quantLevel = (normalized * (levels - 1)).round();
+          quantLevel = quantLevel.clamp(0, levels - 1);
+          
+          // Map quantized level to frequency
+          final double baseFreq = 200.0;
+          final double freqStep = 600.0 / levels;
+          final double targetFreq = baseFreq + (quantLevel * freqStep);
+          
+          _soundService.setFrequency(targetFreq);
+        }
+        
         setState(() {
           _scanPosition = _animationController.value;
         });
@@ -40,18 +81,21 @@ class _PcmVisualizerScreenState extends State<PcmVisualizerScreen>
     super.dispose();
   }
 
-  void _togglePlay() {
+  void _togglePlay() async {
     if (_isPlaying) {
       _animationController.stop();
       _soundService.stop();
+      setState(() {
+        _isPlaying = false;
+      });
     } else {
-      _animationController.repeat();
-      _soundService.setFrequency(440.0 + (_samplingRate * 10)); // Dynamic freq
-      _soundService.start();
+      setState(() {
+        _isPlaying = true;
+      });
+      _updateAnimationSpeed();
+      await _soundService.start();
+      _soundService.setVolume(0.1);
     }
-    setState(() {
-      _isPlaying = !_isPlaying;
-    });
   }
 
   // Calculate the binary representation for a given sine value
@@ -208,9 +252,7 @@ class _PcmVisualizerScreenState extends State<PcmVisualizerScreen>
                       onChanged: (val) {
                         setState(() {
                           _samplingRate = val;
-                          if (_isPlaying) {
-                            _soundService.setFrequency(440.0 + (_samplingRate * 10));
-                          }
+                          _updateAnimationSpeed();
                         });
                       },
                     ),
