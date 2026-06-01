@@ -4,6 +4,7 @@ import '../../../data/services/encoding_service.dart';
 import '../../../data/services/history_service.dart';
 import '../../../domain/models/history_item.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/scrambled_text.dart';
 
 class EncodersToolScreen extends StatefulWidget {
   const EncodersToolScreen({super.key});

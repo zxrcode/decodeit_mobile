@@ -773,6 +773,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  sound_generator:
+    dependency: "direct main"
+    description:
+      name: sound_generator
+      sha256: cd790990631aed2460a521abc96da453758b48e252757cb8cf3c91dd8578269a
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.14"
   source_span:
     dependency: transitive
     description:

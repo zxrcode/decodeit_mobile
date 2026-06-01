@@ -7,8 +7,8 @@ class SoundGeneratorService {
   final int _sampleRate = 44100;
 
   Future<void> init() async {
-    await SoundGenerator.init(sampleRate: _sampleRate);
-    SoundGenerator.setWaveType(waveType: waveTypes.SINUSOIDAL);
+    await SoundGenerator.init(_sampleRate);
+    SoundGenerator.setWaveType(waveTypes.SINUSOIDAL);
     SoundGenerator.setVolume(0.5); // Start with safe volume
   }
 
