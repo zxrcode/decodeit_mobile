@@ -58,6 +58,7 @@ dependencies:
 
   # From morse_code_translator_app
   audioplayers: ^6.1.2
+  sound_generator: ^0.0.13
 
 dev_dependencies:
   flutter_test:

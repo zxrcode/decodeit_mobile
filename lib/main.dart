@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'core/di.dart';
 import 'data/services/morse_audio_service.dart';
+import 'data/services/sound_generator_service.dart';
 import 'ui/theme/app_theme.dart';
 import 'ui/screens/main_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   setupDependencies();
-  // Initialize Morse Audio Service
+  // Initialize Audio Services
   await getIt<MorseAudioService>().init();
+  await getIt<SoundGeneratorService>().init();
   runApp(const DecodeItApp());
 }
 
