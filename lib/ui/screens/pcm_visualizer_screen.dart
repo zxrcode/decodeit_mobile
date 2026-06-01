@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:get_it/get_it.dart';
+import '../../data/services/sound_generator_service.dart';
 
 class PcmVisualizerScreen extends StatefulWidget {
   const PcmVisualizerScreen({super.key});
@@ -11,6 +13,7 @@ class PcmVisualizerScreen extends StatefulWidget {
 
 class _PcmVisualizerScreenState extends State<PcmVisualizerScreen>
     with SingleTickerProviderStateMixin {
+  final _soundService = GetIt.instance<SoundGeneratorService>();
   double _samplingRate = 12.0; // 4 to 32 samples per wave cycle
   int _bitDepth = 3; // 2, 3, or 4 bits (4, 8, or 16 levels)
   late AnimationController _animationController;
@@ -33,14 +36,18 @@ class _PcmVisualizerScreenState extends State<PcmVisualizerScreen>
   @override
   void dispose() {
     _animationController.dispose();
+    _soundService.stop();
     super.dispose();
   }
 
   void _togglePlay() {
     if (_isPlaying) {
       _animationController.stop();
+      _soundService.stop();
     } else {
       _animationController.repeat();
+      _soundService.setFrequency(440.0 + (_samplingRate * 10)); // Dynamic freq
+      _soundService.start();
     }
     setState(() {
       _isPlaying = !_isPlaying;
@@ -201,6 +208,9 @@ class _PcmVisualizerScreenState extends State<PcmVisualizerScreen>
                       onChanged: (val) {
                         setState(() {
                           _samplingRate = val;
+                          if (_isPlaying) {
+                            _soundService.setFrequency(440.0 + (_samplingRate * 10));
+                          }
                         });
                       },
                     ),
