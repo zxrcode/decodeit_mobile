@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 import '../../core/utils/file_saver.dart';
-import '../../ui/widgets/hud_loading_overlay.dart';
+import '../../ui/widgets/laser_scanner_overlay.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SteganographyScreen extends StatefulWidget {
@@ -296,10 +296,10 @@ class _SteganographyScreenState extends State<SteganographyScreen>
               ),
             ],
           ),
-          HudLoadingOverlay(
-            isVisible: _isProcessing,
-            statusText: _processingStatus,
-          ),
+          if (_isProcessing)
+            LaserScannerOverlay(
+              statusText: _processingStatus,
+            ),
         ],
       ),
     );
