@@ -25,9 +25,18 @@ class _CryptoToolScreenState extends State<CryptoToolScreen> {
   String _sha256 = '';
   String _strength = '';
 
-  void _generateHashes() {
+  void _generateHashes() async {
     final input = _inputController.text;
     if (input.isEmpty) return;
+
+    // Brief clear to trigger re-scramble if same text or just for visual feedback
+    setState(() {
+      _md5 = '';
+      _sha1 = '';
+      _sha256 = '';
+    });
+
+    await Future.delayed(const Duration(milliseconds: 50));
 
     setState(() {
       _md5 = _cryptoService.generateMd5(input);
@@ -35,6 +44,7 @@ class _CryptoToolScreenState extends State<CryptoToolScreen> {
       _sha256 = _cryptoService.generateSha256(input);
       _strength = _cryptoService.evaluatePasswordStrength(input);
     });
+
 
     _historyService.addHistoryItem(HistoryItem(
       title: 'Хэш құрылды',

@@ -1,36 +1,61 @@
+import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:flutter/foundation.dart';
-import 'package:sound_generator/sound_generator.dart';
-import 'package:sound_generator/waveTypes.dart';
 
 class SoundGeneratorService {
-  bool _isPlaying = false;
-  double _frequency = 440.0;
-  final int _sampleRate = 44100;
+  bool _isInitialized = false;
+  AudioSource? _sineSource;
+  SoundHandle? _soundHandle;
 
   Future<void> init() async {
-    if (kIsWeb) return; // sound_generator does not support web
-    await SoundGenerator.init(_sampleRate);
-    SoundGenerator.setWaveType(waveTypes.SINUSOIDAL);
-    SoundGenerator.setVolume(0.5); // Start with safe volume
+    if (_isInitialized) return;
+    try {
+      await SoLoud.instance.init();
+      _isInitialized = true;
+    } catch (e) {
+      debugPrint('SoLoud init error: $e');
+    }
   }
 
-  void start() {
-    if (kIsWeb || _isPlaying) return;
-    SoundGenerator.play();
-    _isPlaying = true;
+  Future<void> start() async {
+    if (!_isInitialized) await init();
+    if (_soundHandle != null) return;
+
+    try {
+      // Create a sine wave source
+      _sineSource = await SoLoud.instance.loadWaveform(
+        WaveForm.sin,
+        false,
+        1.0,
+        0.0,
+      );
+      
+      _soundHandle = SoLoud.instance.play(_sineSource!);
+    } catch (e) {
+      debugPrint('SoLoud play error: $e');
+    }
   }
 
   void stop() {
-    if (kIsWeb || !_isPlaying) return;
-    SoundGenerator.stop();
-    _isPlaying = false;
+    if (_soundHandle != null) {
+      SoLoud.instance.stop(_soundHandle!);
+      _soundHandle = null;
+    }
+    if (_sineSource != null) {
+      SoLoud.instance.disposeSource(_sineSource!);
+      _sineSource = null;
+    }
   }
 
   void setFrequency(double freq) {
-    if (kIsWeb) return;
-    _frequency = freq;
-    SoundGenerator.setFrequency(_frequency);
+    if (_sineSource != null) {
+      SoLoud.instance.setWaveformFreq(_sineSource!, freq);
+    }
   }
 
-  bool get isPlaying => _isPlaying;
+  bool get isPlaying => _soundHandle != null;
+
+  void dispose() {
+    stop();
+    SoLoud.instance.deinit();
+  }
 }
