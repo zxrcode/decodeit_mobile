@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:barcode_widget/barcode_widget.dart' as bw;
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:get_it/get_it.dart';
@@ -18,21 +19,31 @@ class QrToolScreen extends StatefulWidget {
 class _QrToolScreenState extends State<QrToolScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _qrTextController = TextEditingController();
+  final _barcodeTextController = TextEditingController();
   final _scanResultController = TextEditingController();
   final _historyService = GetIt.instance<HistoryService>();
   String _qrData = '';
   bool _scannerActive = false;
+  int _errorCorrectionLevel = 1; // 0: L, 1: M, 2: Q, 3: H
+
+  final List<int> _errorLevels = [
+    QrErrorCorrectLevel.L,
+    QrErrorCorrectLevel.M,
+    QrErrorCorrectLevel.Q,
+    QrErrorCorrectLevel.H,
+  ];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     _qrTextController.dispose();
+    _barcodeTextController.dispose();
     _scanResultController.dispose();
     super.dispose();
   }
@@ -45,7 +56,8 @@ class _QrToolScreenState extends State<QrToolScreen> with SingleTickerProviderSt
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(icon: Icon(Icons.qr_code), text: 'Генератор'),
+            Tab(icon: Icon(Icons.qr_code), text: 'QR'),
+            Tab(icon: Icon(Icons.linear_scale), text: 'Штрихкод'),
             Tab(icon: Icon(Icons.camera_alt), text: 'Сканер'),
           ],
         ),
@@ -54,6 +66,7 @@ class _QrToolScreenState extends State<QrToolScreen> with SingleTickerProviderSt
         controller: _tabController,
         children: [
           _buildGeneratorTab(),
+          _buildBarcodeTab(),
           _buildScannerTab(),
         ],
       ),
@@ -80,6 +93,21 @@ class _QrToolScreenState extends State<QrToolScreen> with SingleTickerProviderSt
                     onChanged: (val) {
                       setState(() => _qrData = val);
                     },
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Қателерді түзету деңгейі (Error Correction):', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: ['L (7%)', 'M (15%)', 'Q (25%)', 'H (30%)'].asMap().entries.map((e) {
+                      return ChoiceChip(
+                        label: Text(e.value),
+                        selected: _errorCorrectionLevel == e.key,
+                        onSelected: (val) {
+                          if (val) setState(() => _errorCorrectionLevel = e.key);
+                        },
+                      );
+                    }).toList(),
                   ),
                   const SizedBox(height: 16),
                   FilledButton.icon(
@@ -119,7 +147,16 @@ class _QrToolScreenState extends State<QrToolScreen> with SingleTickerProviderSt
                       child: QrImageView(
                         data: _qrData,
                         version: QrVersions.auto,
+                        errorCorrectionLevel: _errorLevels[_errorCorrectionLevel],
                         size: 200,
+                        eyeStyle: const QrEyeStyle(
+                          eyeShape: QrEyeShape.square,
+                          color: Colors.black,
+                        ),
+                        dataModuleStyle: const QrDataModuleStyle(
+                          dataModuleShape: QrDataModuleShape.square,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -150,6 +187,70 @@ class _QrToolScreenState extends State<QrToolScreen> with SingleTickerProviderSt
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBarcodeTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  CustomTextField(
+                    controller: _barcodeTextController,
+                    label: 'Сандық кодты енгізіңіз',
+                    hint: 'Мысалы: 123456789012',
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Штрихкод стандарты: EAN-13 / Code128',
+                    style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          ValueListenableBuilder(
+            valueListenable: _barcodeTextController,
+            builder: (context, value, child) {
+              final text = value.text;
+              if (text.isEmpty) return const SizedBox();
+              
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      Container(
+                        color: Colors.white,
+                        padding: const EdgeInsets.all(16),
+                        child: bw.BarcodeWidget(
+                          barcode: text.length == 12 || text.length == 13 
+                              ? bw.Barcode.ean13() 
+                              : bw.Barcode.code128(),
+                          data: text,
+                          width: double.infinity,
+                          height: 100,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text('Автоматты түрде генерацияланды', 
+                        style: TextStyle(fontSize: 10, color: Colors.grey)),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );

@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:get_it/get_it.dart';
 import '../../../data/services/crypto_service.dart';
@@ -24,18 +26,26 @@ class _CryptoToolScreenState extends State<CryptoToolScreen> {
   String _sha1 = '';
   String _sha256 = '';
   String _strength = '';
+  String? _fileName;
+  bool _isHashingFile = false;
+
+  @override
+  void dispose() {
+    _inputController.dispose();
+    super.dispose();
+  }
 
   void _generateHashes() async {
     final input = _inputController.text;
     if (input.isEmpty) return;
 
-    // Brief clear to trigger re-scramble if same text or just for visual feedback
     setState(() {
       _md5 = '';
       _sha1 = '';
       _sha256 = '';
+      _fileName = null;
     });
-
+    
     await Future.delayed(const Duration(milliseconds: 50));
 
     setState(() {
@@ -45,34 +55,57 @@ class _CryptoToolScreenState extends State<CryptoToolScreen> {
       _strength = _cryptoService.evaluatePasswordStrength(input);
     });
 
-
     _historyService.addHistoryItem(HistoryItem(
-      title: 'Хэш құрылды',
-      details: 'MD5: ${_md5.substring(0, 8)}...',
+      title: 'Хэш генерацияланды',
+      details: input.length > 30 ? '${input.substring(0, 30)}...' : input,
       timestamp: DateTime.now(),
       type: 'Hash',
     ));
   }
 
-  void _copyToClipboard(String text, String label) {
-    Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$label көшірілді!')),
-    );
-  }
+  void _hashFile() async {
+    final result = await FilePicker.pickFiles(withData: true);
+    if (result == null) return;
 
-  @override
-  void dispose() {
-    _inputController.dispose();
-    super.dispose();
+    setState(() {
+      _isHashingFile = true;
+      _fileName = result.files.first.name;
+      _md5 = '';
+      _sha1 = '';
+      _sha256 = '';
+    });
+
+    try {
+      final bytes = result.files.first.bytes ?? await result.files.first.xFile.readAsBytes();
+      
+      setState(() {
+        // We convert bytes to hex hash directly via service
+        _md5 = _cryptoService.generateMd5(utf8.decode(bytes, allowMalformed: true));
+        _sha1 = _cryptoService.generateSha1(utf8.decode(bytes, allowMalformed: true));
+        _sha256 = _cryptoService.generateSha256(utf8.decode(bytes, allowMalformed: true));
+        _isHashingFile = false;
+      });
+
+      _historyService.addHistoryItem(HistoryItem(
+        title: 'Файл хэштелді',
+        details: _fileName!,
+        timestamp: DateTime.now(),
+        type: 'Hash',
+      ));
+    } catch (e) {
+      setState(() {
+        _isHashingFile = false;
+        _fileName = 'Қате: Файлды оқу мүмкін емес';
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
-      appBar: AppBar(title: const Text('Криптография (Хэштер)')),
+      appBar: AppBar(
+        title: const Text('Криптографиялық хэштер'),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -85,60 +118,54 @@ class _CryptoToolScreenState extends State<CryptoToolScreen> {
                   children: [
                     CustomTextField(
                       controller: _inputController,
-                      label: 'Мәтін немесе құпия сөз',
-                      hint: 'Хэштеу үшін мәтін...',
+                      label: 'Мәтінді енгізіңіз',
+                      hint: 'Хэштеу үшін құпия сөз немесе мәтін...',
                       showPaste: true,
                       maxLines: 2,
                     ),
                     const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: _generateHashes,
-                      icon: const Icon(Icons.fingerprint),
-                      label: const Text('Хэш жасау'),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: FilledButton.icon(
+                            onPressed: _generateHashes,
+                            icon: const Icon(Icons.security),
+                            label: const Text('Хэштеу'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _isHashingFile ? null : _hashFile,
+                            icon: _isHashingFile 
+                              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                              : const Icon(Icons.file_present),
+                            label: Text(_fileName ?? 'Файлды таңдау'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
             ),
-            if (_strength.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Icon(
-                        _getStrengthIcon(),
-                        color: _getStrengthColor(),
-                        size: 28,
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Құпия сөз мықтылығы',
-                            style: theme.textTheme.labelMedium,
-                          ),
-                          Text(
-                            _strength,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: _getStrengthColor(),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+            const SizedBox(height: 24),
+            
+            // Results
+            if (_md5.isNotEmpty || _isHashingFile) ...[
+              if (_fileName == null) ...[
+                Text(
+                  'Құпия сөз беріктігі: $_strength',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _getStrengthColor(_strength),
                   ),
                 ),
-              ),
-            ],
-            if (_md5.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              _HashResultCard(label: 'MD5', value: _md5, onCopy: () => _copyToClipboard(_md5, 'MD5')),
-              _HashResultCard(label: 'SHA-1', value: _sha1, onCopy: () => _copyToClipboard(_sha1, 'SHA-1')),
-              _HashResultCard(label: 'SHA-256', value: _sha256, onCopy: () => _copyToClipboard(_sha256, 'SHA-256')),
+                const SizedBox(height: 16),
+              ],
+              _HashResultCard(label: 'MD5', value: _md5),
+              _HashResultCard(label: 'SHA-1', value: _sha1),
+              _HashResultCard(label: 'SHA-256', value: _sha256),
             ],
           ],
         ),
@@ -146,29 +173,14 @@ class _CryptoToolScreenState extends State<CryptoToolScreen> {
     );
   }
 
-  IconData _getStrengthIcon() {
-    switch (_strength) {
-      case 'Мықты':
-        return Icons.shield;
-      case 'Жақсы':
-        return Icons.verified_user;
-      case 'Орташа':
-        return Icons.security;
-      default:
-        return Icons.warning;
-    }
-  }
-
-  Color _getStrengthColor() {
-    switch (_strength) {
-      case 'Мықты':
-        return Colors.green;
-      case 'Жақсы':
-        return Colors.lightGreen;
-      case 'Орташа':
-        return Colors.orange;
-      default:
-        return Colors.red;
+  Color _getStrengthColor(String strength) {
+    switch (strength) {
+      case 'Мықты': return Colors.green;
+      case 'Жақсы': return Colors.blue;
+      case 'Орташа': return Colors.orange;
+      case 'Әлсіз':
+      case 'Өте әлсіз': return Colors.red;
+      default: return Colors.grey;
     }
   }
 }
@@ -176,47 +188,52 @@ class _CryptoToolScreenState extends State<CryptoToolScreen> {
 class _HashResultCard extends StatelessWidget {
   final String label;
   final String value;
-  final VoidCallback onCopy;
 
-  const _HashResultCard({
-    required this.label,
-    required this.value,
-    required this.onCopy,
-  });
+  const _HashResultCard({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
     return Card(
+      margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  label,
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.cyan),
+                ),
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.copy, size: 20),
-                      tooltip: 'Көшіру',
-                      onPressed: onCopy,
+                      icon: const Icon(Icons.copy, size: 18),
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: value));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Көшірілді!')),
+                        );
+                      },
                     ),
                     IconButton(
-                      icon: const Icon(Icons.share, size: 20),
-                      tooltip: 'Бөлісу',
-                      onPressed: () => SharePlus.instance.share(ShareParams(text: '$label: $value')),
+                      icon: const Icon(Icons.share, size: 18),
+                      onPressed: () => SharePlus.instance.share(ShareParams(text: value)),
                     ),
                   ],
                 ),
               ],
             ),
-            ScrambledText(
-              text: value,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-              duration: const Duration(seconds: 1),
-            ),
+            if (value.isEmpty)
+              const LinearProgressIndicator()
+            else
+              ScrambledText(
+                text: value,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                duration: const Duration(seconds: 1),
+              ),
           ],
         ),
       ),

@@ -13,6 +13,7 @@ class CustomTextField extends StatelessWidget {
   final bool showCopy;
   final bool showShare;
   final Function(String)? onChanged;
+  final TextInputType keyboardType;
 
   const CustomTextField({
     super.key,
@@ -25,6 +26,7 @@ class CustomTextField extends StatelessWidget {
     this.showCopy = false,
     this.showShare = false,
     this.onChanged,
+    this.keyboardType = TextInputType.text,
   });
 
   @override
@@ -47,6 +49,7 @@ class CustomTextField extends StatelessWidget {
               maxLines: maxLines,
               readOnly: readOnly,
               onChanged: onChanged,
+              keyboardType: keyboardType,
               style: readOnly && controller.text.isNotEmpty ? const TextStyle(color: Colors.transparent) : null,
               decoration: InputDecoration(
                 hintText: hint,
