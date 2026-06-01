@@ -31,12 +31,22 @@ class _EncodersToolScreenState extends State<EncodersToolScreen> with SingleTick
   final _abBinaryOutputController = TextEditingController();
   final _abAsciiOutputController = TextEditingController();
 
+  // Caesar
+  final _caesarInputController = TextEditingController();
+  final _caesarOutputController = TextEditingController();
+  int _caesarShift = 3;
+
+  // Vigenere
+  final _vigenereInputController = TextEditingController();
+  final _vigenereKeyController = TextEditingController();
+  final _vigenereOutputController = TextEditingController();
+
   bool _autoDetectedBase64 = false;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -49,6 +59,11 @@ class _EncodersToolScreenState extends State<EncodersToolScreen> with SingleTick
     _abInputController.dispose();
     _abBinaryOutputController.dispose();
     _abAsciiOutputController.dispose();
+    _caesarInputController.dispose();
+    _caesarOutputController.dispose();
+    _vigenereInputController.dispose();
+    _vigenereKeyController.dispose();
+    _vigenereOutputController.dispose();
     super.dispose();
   }
 
@@ -59,10 +74,13 @@ class _EncodersToolScreenState extends State<EncodersToolScreen> with SingleTick
         title: const Text('Кодтау / Декодтау'),
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
           tabs: const [
             Tab(text: 'Base64'),
             Tab(text: 'URL'),
             Tab(text: 'ASCII/Екілік'),
+            Tab(text: 'Цезарь'),
+            Tab(text: 'Виженер'),
           ],
         ),
       ),
@@ -72,6 +90,8 @@ class _EncodersToolScreenState extends State<EncodersToolScreen> with SingleTick
           _buildBase64Tab(),
           _buildUrlTab(),
           _buildAsciiTab(),
+          _buildCaesarTab(),
+          _buildVigenereTab(),
         ],
       ),
     );
@@ -341,6 +361,171 @@ class _EncodersToolScreenState extends State<EncodersToolScreen> with SingleTick
                 readOnly: true,
                 showCopy: true,
                 showShare: true,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCaesarTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  CustomTextField(
+                    controller: _caesarInputController,
+                    label: 'Мәтін',
+                    hint: 'Цезарь шифры үшін мәтін...',
+                    showPaste: true,
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Text('Жылжыту (Shift): ', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Expanded(
+                        child: Slider(
+                          value: _caesarShift.toDouble(),
+                          min: 0,
+                          max: 25,
+                          divisions: 25,
+                          label: _caesarShift.toString(),
+                          onChanged: (val) => setState(() => _caesarShift = val.round()),
+                        ),
+                      ),
+                      Text(_caesarShift.toString(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: () {
+                            final input = _caesarInputController.text;
+                            if (input.isEmpty) return;
+                            final result = _encodingService.encodeCaesar(input, _caesarShift);
+                            setState(() => _caesarOutputController.text = result);
+                          },
+                          icon: const Icon(Icons.lock),
+                          label: const Text('Шифрлау'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            final input = _caesarInputController.text;
+                            if (input.isEmpty) return;
+                            final result = _encodingService.decodeCaesar(input, _caesarShift);
+                            setState(() => _caesarOutputController.text = result);
+                          },
+                          icon: const Icon(Icons.lock_open),
+                          label: const Text('Дешифрлау'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: CustomTextField(
+                controller: _caesarOutputController,
+                label: 'Нәтиже',
+                maxLines: 3,
+                readOnly: true,
+                showCopy: true,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVigenereTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  CustomTextField(
+                    controller: _vigenereInputController,
+                    label: 'Мәтін',
+                    hint: 'Виженер шифры үшін мәтін...',
+                    showPaste: true,
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 12),
+                  CustomTextField(
+                    controller: _vigenereKeyController,
+                    label: 'Кілт (Сөз)',
+                    hint: 'Мысалы: KEY',
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: () {
+                            final input = _vigenereInputController.text;
+                            final key = _vigenereKeyController.text;
+                            if (input.isEmpty || key.isEmpty) return;
+                            final result = _encodingService.encodeVigenere(input, key);
+                            setState(() => _vigenereOutputController.text = result);
+                          },
+                          icon: const Icon(Icons.enhanced_encryption),
+                          label: const Text('Шифрлау'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            final input = _vigenereInputController.text;
+                            final key = _vigenereKeyController.text;
+                            if (input.isEmpty || key.isEmpty) return;
+                            final result = _encodingService.decodeVigenere(input, key);
+                            setState(() => _vigenereOutputController.text = result);
+                          },
+                          icon: const Icon(Icons.no_encryption),
+                          label: const Text('Дешифрлау'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: CustomTextField(
+                controller: _vigenereOutputController,
+                label: 'Нәтиже',
+                maxLines: 3,
+                readOnly: true,
+                showCopy: true,
               ),
             ),
           ),

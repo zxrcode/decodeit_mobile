@@ -14,6 +14,76 @@ class EncodingService {
     }
   }
 
+  // Caesar Cipher
+  String encodeCaesar(String input, int shift) {
+    final buffer = StringBuffer();
+    for (var i = 0; i < input.length; i++) {
+      var charCode = input.codeUnitAt(i);
+      // Basic implementation for A-Z and a-z
+      if (charCode >= 65 && charCode <= 90) {
+        buffer.writeCharCode((charCode - 65 + shift) % 26 + 65);
+      } else if (charCode >= 97 && charCode <= 122) {
+        buffer.writeCharCode((charCode - 97 + shift) % 26 + 97);
+      } else {
+        buffer.writeCharCode(charCode);
+      }
+    }
+    return buffer.toString();
+  }
+
+  String decodeCaesar(String input, int shift) {
+    return encodeCaesar(input, 26 - (shift % 26));
+  }
+
+  // Vigenere Cipher
+  String encodeVigenere(String input, String key) {
+    if (key.isEmpty) return input;
+    final buffer = StringBuffer();
+    final cleanKey = key.toUpperCase().replaceAll(RegExp(r'[^A-Z]'), '');
+    if (cleanKey.isEmpty) return input;
+
+    int keyIndex = 0;
+    for (var i = 0; i < input.length; i++) {
+      var charCode = input.codeUnitAt(i);
+      if (charCode >= 65 && charCode <= 90) {
+        int shift = cleanKey.codeUnitAt(keyIndex % cleanKey.length) - 65;
+        buffer.writeCharCode((charCode - 65 + shift) % 26 + 65);
+        keyIndex++;
+      } else if (charCode >= 97 && charCode <= 122) {
+        int shift = cleanKey.codeUnitAt(keyIndex % cleanKey.length) - 65;
+        buffer.writeCharCode((charCode - 97 + shift) % 26 + 97);
+        keyIndex++;
+      } else {
+        buffer.writeCharCode(charCode);
+      }
+    }
+    return buffer.toString();
+  }
+
+  String decodeVigenere(String input, String key) {
+    if (key.isEmpty) return input;
+    final buffer = StringBuffer();
+    final cleanKey = key.toUpperCase().replaceAll(RegExp(r'[^A-Z]'), '');
+    if (cleanKey.isEmpty) return input;
+
+    int keyIndex = 0;
+    for (var i = 0; i < input.length; i++) {
+      var charCode = input.codeUnitAt(i);
+      if (charCode >= 65 && charCode <= 90) {
+        int shift = cleanKey.codeUnitAt(keyIndex % cleanKey.length) - 65;
+        buffer.writeCharCode((charCode - 65 - shift + 26) % 26 + 65);
+        keyIndex++;
+      } else if (charCode >= 97 && charCode <= 122) {
+        int shift = cleanKey.codeUnitAt(keyIndex % cleanKey.length) - 65;
+        buffer.writeCharCode((charCode - 97 - shift + 26) % 26 + 97);
+        keyIndex++;
+      } else {
+        buffer.writeCharCode(charCode);
+      }
+    }
+    return buffer.toString();
+  }
+
   // URL
   String encodeUrl(String input) {
     return Uri.encodeComponent(input);

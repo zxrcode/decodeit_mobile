@@ -170,22 +170,71 @@ class _ColorModelsScreenState extends State<ColorModelsScreen> with SingleTicker
 
   Widget _buildVennSim(Color result, bool isRgb) {
     return Container(
-      height: 150,
+      height: 250,
       width: double.infinity,
       decoration: BoxDecoration(
         color: isRgb ? Colors.black : Colors.white,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white10),
       ),
-      child: Center(
-        child: Text(
-          isRgb ? 'ADDITIVE MIXING' : 'SUBTRACTIVE MIXING',
-          style: TextStyle(
-            color: isRgb ? Colors.white24 : Colors.black26,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 2,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: CustomPaint(
+          painter: _ColorMixingPainter(
+            r: _r, g: _g, b: _b,
+            c: _c, m: _m, y: _y, k: _k,
+            isRgb: isRgb,
           ),
         ),
       ),
     );
   }
+}
+
+class _ColorMixingPainter extends CustomPainter {
+  final double r, g, b;
+  final double c, m, y, k;
+  final bool isRgb;
+
+  _ColorMixingPainter({
+    required this.r, required this.g, required this.b,
+    required this.c, required this.m, required this.y, required this.k,
+    required this.isRgb,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 6;
+
+    if (isRgb) {
+      // Additive mixing (Light)
+      final paintR = Paint()..color = Color.fromARGB((r).round(), 255, 0, 0)..blendMode = BlendMode.plus;
+      final paintG = Paint()..color = Color.fromARGB((g).round(), 0, 255, 0)..blendMode = BlendMode.plus;
+      final paintB = Paint()..color = Color.fromARGB((b).round(), 0, 0, 255)..blendMode = BlendMode.plus;
+
+      canvas.drawCircle(center.translate(0, -radius * 0.5), radius, paintR);
+      canvas.drawCircle(center.translate(-radius * 0.5, radius * 0.3), radius, paintG);
+      canvas.drawCircle(center.translate(radius * 0.5, radius * 0.3), radius, paintB);
+    } else {
+      // Subtractive mixing (Ink)
+      // CMYK simulation: we use multiply blend mode
+      // Resulting color is white - (C+M+Y+K)
+      
+      // We simulate physical ink layers
+      final paintC = Paint()..color = Color.fromARGB((c * 255).round(), 0, 255, 255)..blendMode = BlendMode.multiply;
+      final paintM = Paint()..color = Color.fromARGB((m * 255).round(), 255, 0, 255)..blendMode = BlendMode.multiply;
+      final paintY = Paint()..color = Color.fromARGB((y * 255).round(), 255, 255, 0)..blendMode = BlendMode.multiply;
+      final paintK = Paint()..color = Color.fromARGB((k * 255).round(), 0, 0, 0)..blendMode = BlendMode.multiply;
+
+      canvas.drawCircle(center.translate(0, -radius * 0.5), radius, paintC);
+      canvas.drawCircle(center.translate(-radius * 0.5, radius * 0.3), radius, paintM);
+      canvas.drawCircle(center.translate(radius * 0.5, radius * 0.3), radius, paintY);
+      // Black layer covers everything
+      canvas.drawCircle(center, radius * 0.3, paintK);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

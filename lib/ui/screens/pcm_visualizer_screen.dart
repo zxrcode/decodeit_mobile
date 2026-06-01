@@ -18,6 +18,7 @@ class _PcmVisualizerScreenState extends State<PcmVisualizerScreen>
   int _bitDepth = 3; // 2, 3, or 4 bits (4, 8, or 16 levels)
   late AnimationController _animationController;
   bool _isPlaying = false;
+  bool _isNoiseOnly = false;
   double _scanPosition = 0.0;
 
   void _updateAnimationSpeed() {
@@ -54,18 +55,27 @@ class _PcmVisualizerScreenState extends State<PcmVisualizerScreen>
           final double sineVal = math.sin(sampleT * 2 * math.pi * 1.5);
           
           // Normalize exactly like painter's yQuantized logic
-          // Painter: midY + sineVal * (size.height / 2 - levelHeight)
-          // Since we just need the quantized level (0 to levels-1)
           final double normalized = (sineVal + 1.0) / 2.0; // 0.0 to 1.0
           int quantLevel = (normalized * (levels - 1)).round();
           quantLevel = quantLevel.clamp(0, levels - 1);
           
-          // Map quantized level to frequency
-          final double baseFreq = 200.0;
-          final double freqStep = 600.0 / levels;
-          final double targetFreq = baseFreq + (quantLevel * freqStep);
-          
-          _soundService.setFrequency(targetFreq);
+          if (_isNoiseOnly) {
+            // Noise is the ERROR between actual value and quantized value
+            final double quantizedNormalized = quantLevel / (levels - 1);
+            final double error = (normalized - quantizedNormalized).abs();
+            // Map error to a high-pitched noise (higher error = higher pitch/volume)
+            final double targetFreq = 1000.0 + (error * 5000.0);
+            _soundService.setFrequency(targetFreq);
+            _soundService.setVolume(error * 0.5); // Error determines loudness
+          } else {
+            // Map quantized level to frequency
+            final double baseFreq = 200.0;
+            final double freqStep = 600.0 / levels;
+            final double targetFreq = baseFreq + (quantLevel * freqStep);
+            
+            _soundService.setFrequency(targetFreq);
+            _soundService.setVolume(0.1);
+          }
         }
         
         setState(() {
@@ -288,10 +298,29 @@ class _PcmVisualizerScreenState extends State<PcmVisualizerScreen>
                     ),
                     const SizedBox(height: 12),
                     // Controls
-                    FilledButton.icon(
-                      onPressed: _togglePlay,
-                      icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-                      label: Text(_isPlaying ? 'Тоқтату' : 'Сигналды іске қосу'),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: FilledButton.icon(
+                            onPressed: _togglePlay,
+                            icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
+                            label: Text(_isPlaying ? 'Тоқтату' : 'Сигналды іске қосу'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Tooltip(
+                          message: 'Кванттау шуын есту (Сигнал мен код арасындағы айырмашылық)',
+                          child: FilterChip(
+                            label: const Icon(Icons.noise_aware, size: 20),
+                            selected: _isNoiseOnly,
+                            onSelected: (val) {
+                              setState(() {
+                                _isNoiseOnly = val;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

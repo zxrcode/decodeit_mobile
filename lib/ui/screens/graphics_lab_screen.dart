@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'huffman_coding_screen.dart';
 
 enum GraphicsMode { binary, grayscale, rgb }
 
@@ -14,6 +15,20 @@ class GraphicsLabScreen extends StatefulWidget {
 class _GraphicsLabScreenState extends State<GraphicsLabScreen> {
   GraphicsMode _mode = GraphicsMode.binary;
   final List<Color> _gridColors = List.generate(64, (_) => const Color(0xFF0F172A)); // Default dark background
+  final TextEditingController _dataController = TextEditingController();
+  bool _isUpdatingFromCode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateCodeFromGrid();
+  }
+
+  @override
+  void dispose() {
+    _dataController.dispose();
+    super.dispose();
+  }
 
   // Colors palette for RGB mode
   final List<Color> _palette = [
@@ -62,7 +77,56 @@ class _GraphicsLabScreenState extends State<GraphicsLabScreen> {
         // Paint cell with selected palette color
         _gridColors[index] = _palette[_selectedPaletteIndex];
       }
+      _updateCodeFromGrid();
     });
+  }
+
+  void _updateCodeFromGrid() {
+    if (_isUpdatingFromCode) return;
+    _dataController.text = _getSerializedData();
+  }
+
+  void _updateGridFromCode(String value) {
+    if (_isCompressing) return;
+    _isUpdatingFromCode = true;
+    setState(() {
+      try {
+        if (_mode == GraphicsMode.binary) {
+          final bits = value.trim().split(RegExp(r'\s+'));
+          for (int i = 0; i < 64 && i < bits.length; i++) {
+            _gridColors[i] = bits[i] == '1' ? const Color(0xFF00E5FF) : const Color(0xFF0F172A);
+          }
+        } else if (_mode == GraphicsMode.grayscale) {
+          final bytes = value.trim().split(RegExp(r'[,\s]+'));
+          for (int i = 0; i < 64 && i < bytes.length; i++) {
+            final val = int.tryParse(bytes[i]) ?? 0;
+            final valClamped = val.clamp(0, 255);
+            _gridColors[i] = Color.fromARGB(255, valClamped, valClamped, valClamped);
+          }
+        } else {
+          final codes = value.trim().split(RegExp(r'\s+'));
+          for (int i = 0; i < 64 && i < codes.length; i++) {
+            _gridColors[i] = _getColorFromCode(codes[i]);
+          }
+        }
+      } catch (e) {
+        debugPrint('Grid update error: $e');
+      }
+    });
+    _isUpdatingFromCode = false;
+  }
+
+  Color _getColorFromCode(String code) {
+    switch (code) {
+      case 'D': return const Color(0xFF0F172A);
+      case 'C': return const Color(0xFF00E5FF);
+      case 'P': return const Color(0xFF9D4EDD);
+      case 'G': return const Color(0xFF10B981);
+      case 'R': return const Color(0xFFEF4444);
+      case 'Y': return const Color(0xFFF59E0B);
+      case 'W': return Colors.white;
+      default: return const Color(0xFF0F172A);
+    }
   }
 
   // Helper to stringify color for serialization
@@ -121,12 +185,12 @@ class _GraphicsLabScreenState extends State<GraphicsLabScreen> {
         if (rowColors[col] == lastColor) {
           count++;
         } else {
-          rowRle.add('$count${_getColorCode(lastColor)}');
+          rowRle.add('${count}x[${_getColorCode(lastColor)}]');
           lastColor = rowColors[col];
           count = 1;
         }
       }
-      rowRle.add('$count${_getColorCode(lastColor)}');
+      rowRle.add('${count}x[${_getColorCode(lastColor)}]');
       totalCompressedElements += rowRle.length;
 
       await Future.delayed(const Duration(milliseconds: 400));
@@ -136,10 +200,20 @@ class _GraphicsLabScreenState extends State<GraphicsLabScreen> {
     }
 
     // Compression ratio calculation
-    // Binary: original 64 bits = 8 bytes. RLE = (number of runs * (count_size + value_size))
-    // Let's simplify: compare original elements (64) vs compressed elements count
-    final int originalSize = _mode == GraphicsMode.rgb ? 64 * 3 : 64; // RGB is 3 bytes per pixel
-    final int compressedSize = totalCompressedElements * (_mode == GraphicsMode.rgb ? 4 : 2); // run length + value
+    int originalSize;
+    int compressedSize;
+    String unit;
+
+    if (_mode == GraphicsMode.binary) {
+      originalSize = 64; // bits
+      compressedSize = totalCompressedElements * 2; // approximation
+      unit = 'Бит';
+    } else {
+      originalSize = _mode == GraphicsMode.rgb ? 64 * 3 : 64; // bytes
+      compressedSize = totalCompressedElements * (_mode == GraphicsMode.rgb ? 4 : 2);
+      unit = 'Байт';
+    }
+    
     final double ratio = (1.0 - (compressedSize / originalSize)) * 100.0;
 
     setState(() {
@@ -147,8 +221,8 @@ class _GraphicsLabScreenState extends State<GraphicsLabScreen> {
       _scanningRow = -1;
       _compressionRatio = ratio.clamp(0.0, 100.0);
       _compressedResultText = 'Сығылу аяқталды!\n'
-          'Түпнұсқа өлшемі: $originalSize Байт\n'
-          'Сығылған өлшемі: $compressedSize Байт';
+          'Түпнұсқа өлшемі: $originalSize $unit\n'
+          'Сығылған өлшемі: $compressedSize $unit';
     });
   }
 
@@ -156,7 +230,7 @@ class _GraphicsLabScreenState extends State<GraphicsLabScreen> {
     if (_mode == GraphicsMode.binary) {
       return c == const Color(0xFF0F172A) ? '0' : '1';
     } else if (_mode == GraphicsMode.grayscale) {
-      return '[G:${c.red}]';
+      return '${c.red}';
     } else {
       if (c == const Color(0xFF0F172A)) return 'D';
       if (c == const Color(0xFF00E5FF)) return 'C';
@@ -378,21 +452,38 @@ class _GraphicsLabScreenState extends State<GraphicsLabScreen> {
             const SizedBox(height: 16),
 
             // Serialization Panel
-            Text(
-              'Нақты уақыттағы кодталған деректер:',
-              style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _mode == GraphicsMode.binary 
+                    ? 'Кодталған биттер (Bits):' 
+                    : 'Кодталған байттар (Bytes):',
+                  style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  '64 пиксель',
+                  style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: const Color(0xFF070B14),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFF1E2638)),
               ),
-              child: SelectableText(
-                serializedData,
+              child: TextField(
+                controller: _dataController,
+                maxLines: 3,
+                onChanged: _updateGridFromCode,
                 style: GoogleFonts.firaCode(fontSize: 11, color: Colors.cyan),
+                decoration: const InputDecoration(
+                  contentPadding: EdgeInsets.all(12),
+                  border: InputBorder.none,
+                  hintText: 'Кодты осы жерге енгізіңіз немесе өзгертіңіз...',
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -434,6 +525,27 @@ class _GraphicsLabScreenState extends State<GraphicsLabScreen> {
                           style: GoogleFonts.orbitron(
                             fontWeight: FontWeight.bold,
                             color: Colors.green,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => HuffmanCodingScreen(
+                                    initialText: _rleSteps.join("\n"),
+                                  ),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.account_tree_outlined),
+                            label: const Text('Хаффманға жіберу'),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Colors.purple.shade700,
+                            ),
                           ),
                         ),
                       ],

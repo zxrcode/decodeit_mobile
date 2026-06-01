@@ -59,6 +59,8 @@ dependencies:
   # From morse_code_translator_app
   audioplayers: ^6.1.2
   flutter_soloud: ^4.0.7
+  barcode_widget: ^2.0.4
+  file_picker: ^11.0.2
 
 dev_dependencies:
   flutter_test:

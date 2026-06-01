@@ -9,6 +9,10 @@ import 'morse_translator_screen.dart';
 import 'morse_chart_screen.dart';
 import 'morse_learn_screen.dart';
 import 'steganography_screen.dart';
+import 'huffman_coding_screen.dart';
+import 'hamming_tool_screen.dart';
+import 'color_models_screen.dart';
+import 'spectrogram_screen.dart';
 import '../../core/di.dart';
 import '../../data/services/morse_audio_service.dart';
 
@@ -83,21 +87,22 @@ class _HomeGrid extends StatelessWidget {
 
     final soundTools = [
       _ToolItem('PCM Дыбыс', Icons.graphic_eq, const Color(0xFF00E5FF), const PcmVisualizerScreen()),
+      _ToolItem('Спектрограмма', Icons.waves, const Color(0xFFFACC15), const SpectrogramScreen()),
       _ToolItem('Морзе колы', Icons.signal_cellular_alt, const Color(0xFF10B981), MorseTranslatorScreen(audioService: morseAudioService)),
-      _ToolItem('Морзе кесте', Icons.table_chart, const Color(0xFFFFB703), MorseChartScreen(audioService: morseAudioService)),
       _ToolItem('Морзе оқу', Icons.school, const Color(0xFFFF0055), MorseLearnScreen(audioService: morseAudioService)),
     ];
 
     final graphicsTools = [
       _ToolItem('Пиксель торы', Icons.grid_4x4, const Color(0xFF00F5D4), const GraphicsLabScreen()),
+      _ToolItem('RGB vs CMYK', Icons.palette_outlined, const Color(0xFFF472B6), const ColorModelsScreen()),
       _ToolItem('Стеганография', Icons.visibility_off, const Color(0xFF8B5CF6), const SteganographyScreen()),
+      _ToolItem('Хаффман кодтауы', Icons.account_tree_outlined, const Color(0xFFFF9F1C), const HuffmanCodingScreen()),
     ];
 
     final generalTools = [
-      _ToolItem('QR Сканер', Icons.qr_code_scanner, const Color(0xFF14B8A6), const QrToolScreen()),
+      _ToolItem('Хэмминг коды', Icons.shield_outlined, const Color(0xFF3B82F6), const HammingToolScreen()),
       _ToolItem('Хэш құру', Icons.fingerprint, const Color(0xFF6366F1), const CryptoToolScreen()),
       _ToolItem('Base64 / URL', Icons.code, const Color(0xFFF59E0B), const EncodersToolScreen()),
-      _ToolItem('Әзірлеуші құралы', Icons.build, const Color(0xFFEF4444), const DevToolScreen()),
       _ToolItem('Тарих', Icons.history, const Color(0xFF845EF7), const HistoryScreen()),
     ];
 
