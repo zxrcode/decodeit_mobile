@@ -6,6 +6,7 @@ import '../../../data/services/crypto_service.dart';
 import '../../../data/services/history_service.dart';
 import '../../../domain/models/history_item.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/scrambled_text.dart';
 
 class CryptoToolScreen extends StatefulWidget {
   const CryptoToolScreen({super.key});
@@ -201,9 +202,10 @@ class _HashResultCard extends StatelessWidget {
                 ),
               ],
             ),
-            SelectableText(
-              value,
+            ScrambledText(
+              text: value,
               style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+              duration: const Duration(seconds: 1),
             ),
           ],
         ),

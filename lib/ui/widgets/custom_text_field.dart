@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
+import 'scrambled_text.dart';
 
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
@@ -38,15 +39,32 @@ class CustomTextField extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
-        TextField(
-          controller: controller,
-          maxLines: maxLines,
-          readOnly: readOnly,
-          onChanged: onChanged,
-          decoration: InputDecoration(
-            hintText: hint,
-            suffixIcon: _buildActionButtons(context),
-          ),
+        Stack(
+          alignment: Alignment.centerLeft,
+          children: [
+            TextField(
+              controller: controller,
+              maxLines: maxLines,
+              readOnly: readOnly,
+              onChanged: onChanged,
+              style: readOnly && controller.text.isNotEmpty ? const TextStyle(color: Colors.transparent) : null,
+              decoration: InputDecoration(
+                hintText: hint,
+                suffixIcon: _buildActionButtons(context),
+              ),
+            ),
+            if (readOnly && controller.text.isNotEmpty)
+              Positioned(
+                left: 12,
+                right: 48, // Room for icons
+                child: IgnorePointer(
+                  child: ScrambledText(
+                    text: controller.text,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ),
+              ),
+          ],
         ),
       ],
     );
