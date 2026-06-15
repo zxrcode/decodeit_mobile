@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../widgets/explanations/color_explanation.dart';
 
 class ColorModelsScreen extends StatefulWidget {
   const ColorModelsScreen({super.key});
@@ -48,6 +49,18 @@ class _ColorModelsScreenState extends State<ColorModelsScreen> with SingleTicker
     return Scaffold(
       appBar: AppBar(
         title: const Text('RGB vs CMYK'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: Colors.transparent,
+                builder: (context) => const ColorExplanation(),
+              );
+            },
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: const [

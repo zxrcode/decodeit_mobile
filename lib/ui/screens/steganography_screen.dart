@@ -8,6 +8,7 @@ import 'package:image/image.dart' as img;
 import '../../core/utils/file_saver.dart';
 import '../../ui/widgets/laser_scanner_overlay.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../widgets/explanations/stegano_explanation.dart';
 
 class SteganographyScreen extends StatefulWidget {
   const SteganographyScreen({super.key});
@@ -290,7 +291,21 @@ class _SteganographyScreenState extends State<SteganographyScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Стеганография')),
+      appBar: AppBar(
+        title: const Text('Стеганография'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: Colors.transparent,
+                builder: (context) => const SteganoExplanation(),
+              );
+            },
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           Column(

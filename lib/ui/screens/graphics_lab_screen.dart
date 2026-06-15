@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'huffman_coding_screen.dart';
+import '../widgets/explanations/graphics_explanation.dart';
 
 enum GraphicsMode { binary, grayscale, rgb }
 
@@ -251,6 +252,18 @@ class _GraphicsLabScreenState extends State<GraphicsLabScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('ГРАФИКАЛЫҚ ЗЕРТХАНА'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: Colors.transparent,
+                builder: (context) => const GraphicsExplanation(),
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

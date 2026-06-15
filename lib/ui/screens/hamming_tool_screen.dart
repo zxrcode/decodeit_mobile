@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../widgets/explanations/hamming_explanation.dart';
 
 class HammingToolScreen extends StatefulWidget {
   const HammingToolScreen({super.key});
@@ -100,7 +101,21 @@ class _HammingToolScreenState extends State<HammingToolScreen> with SingleTicker
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('ХЭММИНГ КОДЫ')),
+      appBar: AppBar(
+        title: const Text('ХЭММИНГ КОДЫ'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: Colors.transparent,
+                builder: (context) => const HammingExplanation(),
+              );
+            },
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

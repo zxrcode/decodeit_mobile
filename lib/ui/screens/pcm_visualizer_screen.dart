@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../widgets/explanations/pcm_explanation.dart';
 import 'package:get_it/get_it.dart';
 import '../../data/services/sound_generator_service.dart';
 
@@ -137,6 +138,18 @@ class _PcmVisualizerScreenState extends State<PcmVisualizerScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('PCM ДЫБЫС КОДТАУ'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: Colors.transparent,
+                builder: (context) => const PcmExplanation(),
+              );
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

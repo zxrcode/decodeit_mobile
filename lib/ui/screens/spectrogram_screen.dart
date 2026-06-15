@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../widgets/explanations/spectrogram_explanation.dart';
 import 'package:get_it/get_it.dart';
 import '../../data/services/sound_generator_service.dart';
 
@@ -90,7 +91,21 @@ class _SpectrogramScreenState extends State<SpectrogramScreen> with SingleTicker
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('СПЕКТРОГРАММА')),
+      appBar: AppBar(
+        title: const Text('СПЕКТРОГРАММА'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: Colors.transparent,
+                builder: (context) => const SpectrogramExplanation(),
+              );
+            },
+          ),
+        ],
+      ),
       body: Column(
         children: [
           _buildVisualizer(),

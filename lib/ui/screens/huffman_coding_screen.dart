@@ -1,6 +1,7 @@
 import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../widgets/explanations/huffman_explanation.dart';
 
 class HuffmanNode {
   final String char;
@@ -23,6 +24,7 @@ class HuffmanCodingScreen extends StatefulWidget {
 
 class _HuffmanCodingScreenState extends State<HuffmanCodingScreen> {
   final TextEditingController _textController = TextEditingController();
+  final TransformationController _transformationController = TransformationController();
   HuffmanNode? _root;
   Map<String, String> _huffmanCodes = {};
   int _originalSizeBits = 0;
@@ -31,10 +33,19 @@ class _HuffmanCodingScreenState extends State<HuffmanCodingScreen> {
   @override
   void initState() {
     super.initState();
+    // Set initial scale to 0.6
+    _transformationController.value = Matrix4.diagonal3Values(0.6, 0.6, 1.0);
     if (widget.initialText != null) {
       _textController.text = widget.initialText!;
       _generateHuffman();
     }
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    _transformationController.dispose();
+    super.dispose();
   }
 
   void _generateHuffman() {
@@ -101,7 +112,22 @@ class _HuffmanCodingScreenState extends State<HuffmanCodingScreen> {
     final ratio = _originalSizeBits > 0 ? (1.0 - (_compressedSizeBits / _originalSizeBits)) * 100 : 0.0;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('ХАФФМАН КОДТАУЫ')),
+      appBar: AppBar(
+        title: const Text('ХАФФМАН КОДТАУЫ'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => const HuffmanExplanation(),
+              );
+            },
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -192,7 +218,7 @@ class _HuffmanCodingScreenState extends State<HuffmanCodingScreen> {
               
               const SizedBox(height: 8),
               Container(
-                height: 400,
+                height: 500,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: Colors.black45,
@@ -201,11 +227,12 @@ class _HuffmanCodingScreenState extends State<HuffmanCodingScreen> {
                 ),
                 child: InteractiveViewer(
                   constrained: false,
-                  boundaryMargin: const EdgeInsets.all(100),
-                  minScale: 0.1,
+                  boundaryMargin: const EdgeInsets.all(1000), // Huge margin to allow panning anywhere
+                  minScale: 0.05,
                   maxScale: 2.0,
+                  transformationController: _transformationController,
                   child: CustomPaint(
-                    size: const Size(800, 400),
+                    size: const Size(2000, 1000), // Massive canvas for large trees
                     painter: _HuffmanTreePainter(root: _root),
                   ),
                 ),
